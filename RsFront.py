@@ -4,11 +4,11 @@ Train Condition Monitoring — Frontend shell (design only)
 Run with:
     streamlit run RsFront.py
 
-Tech-noir console: deep violet/black base (#05050B), working upload console
-with a prediction-model picker and bento-card results (timeline, Monte Carlo,
-survival curve). The Door subsystem runs the real segmentation +
-classification pipeline (see door_pipeline.py); other subsystems remain
-placeholders.
+Instrument console: near-black drafting-grid base with signal-red accents and
+mono data type, working upload console with a prediction-model picker and
+card-based results (timeline, Monte Carlo, survival curve). The Door subsystem
+runs the real segmentation + classification pipeline (see door_pipeline.py);
+other subsystems remain placeholders.
 """
 
 import io
@@ -16,6 +16,7 @@ import os
 import time
 
 import joblib
+import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -56,7 +57,9 @@ def chart_frame(svg_html, height):
     """Render an SVG chart inside an iframe so it always displays."""
     return components.html(
         "<style>body{margin:0;background:transparent;}"
-        "svg{width:100%;height:100%;display:block;}</style>" + svg_html,
+        "svg{width:100%;height:100%;display:block;}"
+        "svg text{font-family:'IBM Plex Mono',Consolas,Menlo,monospace;}"
+        "</style>" + svg_html,
         height=height,
         scrolling=False,
     )
@@ -73,19 +76,51 @@ st.set_page_config(
 st.html(
     """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg: #06060B;
+            --panel: #0C0C14;
+            --line: rgba(255, 255, 255, 0.055);
+            --line-strong: rgba(255, 255, 255, 0.10);
+            --txt: #E7E7EF;
+            --txt2: #9C9CA8;
+            --muted: #63636E;
+            --red: #FF2D55;
+            --red-soft: #FF6B81;
+            --amber: #FFB020;
+            --input: #14141E;
+            --track: #161620;
+            --scroll-thumb: #1C1C28;
+            --scroll-thumb-hover: #2A2A3A;
+            --chip-up: #FF9AA8;
+            --on-accent: #fff;
+            --red-text: #FFC2CC;
+            --alert-text: #FFB9C4;
+            --switch-track: rgba(250, 250, 250, 0.20);
+            --switch-thumb: #FAFAFA;
+            --switch-on: rgba(255, 45, 85, 0.45);
+            --btn-bg: rgba(255, 255, 255, 0.015);
+            --btn-text: #9C9CA8;
+            --btn-text-hover: #E7E7EF;
+            --btn-primary-bg: rgba(255, 45, 85, 0.09);
+            --red-btn-text: #FFC2CC;
+        }
 
         html {scroll-behavior: smooth;}
 
         html, body, [class*="css"] {
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
 
         .stApp, [data-testid="stAppViewContainer"] {
-            background-color: #05050B;
+            background-color: var(--bg);
             background-image:
-                radial-gradient(1100px 620px at 50% -12%, rgba(255, 45, 85, 0.10), transparent 60%);
-            color: #a1a1aa;
+                radial-gradient(820px 460px at 12% -8%, rgba(255, 45, 85, 0.06), transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+            background-size: auto, 46px 46px, 46px 46px;
+            color: var(--txt2);
         }
 
         #MainMenu {visibility: hidden;}
@@ -98,71 +133,75 @@ st.html(
             padding-bottom: 2rem;
         }
 
-        ::-webkit-scrollbar {width: 10px;}
-        ::-webkit-scrollbar-track {background: #05050B;}
-        ::-webkit-scrollbar-thumb {background: #1c1c26; border-radius: 0;}
-        ::-webkit-scrollbar-thumb:hover {background: #2a2a38;}
-        ::selection {background: #e11d48; color: #fff;}
+        ::-webkit-scrollbar {width: 8px;}
+        ::-webkit-scrollbar-track {background: var(--bg);}
+        ::-webkit-scrollbar-thumb {background: var(--scroll-thumb);}
+        ::-webkit-scrollbar-thumb:hover {background: var(--scroll-thumb-hover);}
+        ::selection {background: var(--red); color: #fff;}
 
         @keyframes fadeUp {
             from {opacity: 0; transform: translateY(14px);}
             to {opacity: 1; transform: none;}
         }
 
-        /* Top bar ------------------------------------------------------ */
-        .topbar {display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0 0.2rem;}
-        .tb-l {display: flex; align-items: center; gap: 0.7rem;}
-        .logo-mark {
-            width: 30px; height: 30px; border-radius: 8px;
-            background: linear-gradient(135deg, #ff2d55, #ff8c1a);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 14px; color: #05050B;
-            box-shadow: 0 0 14px rgba(255, 45, 85, 0.35);
-        }
-        .tb-name {font-weight: 700; font-size: 0.85rem; letter-spacing: 0.22em; color: #fff;}
-        .tb-nav {display: flex; gap: 1.4rem;}
-        .tb-nav a {
-            font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em;
-            text-transform: uppercase; color: #6b6b76; text-decoration: none;
-            transition: color 0.15s ease;
-        }
-        .tb-nav a:hover {color: #ffc4c4;}
-        .tb-ver {
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 999px; padding: 0.32rem 0.75rem;
-            font-size: 0.64rem; font-weight: 500; letter-spacing: 0.1em;
-            color: #71717a;
+        @keyframes blink {
+            0%, 100% {opacity: 1;}
+            50% {opacity: 0.35;}
         }
 
-        /* Bento grid (prediction results) -------------------------------- */
+        /* Top bar ------------------------------------------------------ */
+        .topbar {display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0 0.9rem;}
+        .tb-l {display: flex; align-items: center; gap: 0.75rem;}
+        .logo-mark {
+            width: 28px; height: 28px; border-radius: 6px;
+            background: var(--red);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px;
+            color: #0A0A12;
+        }
+        .tb-name {font-weight: 700; font-size: 0.9rem; letter-spacing: 0.3em; color: var(--txt);}
+        .tb-div {width: 1px; height: 16px; background: var(--line-strong);}
+        .tb-sub {font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; color: var(--muted);}
+        .tb-ver {
+            font-family: 'IBM Plex Mono', monospace;
+            border: 1px solid var(--line-strong);
+            background: var(--input);
+            border-radius: 999px; padding: 0.34rem 0.8rem;
+            font-size: 0.6rem; font-weight: 500; letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        /* Results grid --------------------------------------------------- */
         .bento {display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 1.2rem 0 0.4rem;}
         .fcard {
             display: flex; flex-direction: column;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.25rem 1.35rem;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 1.3rem 1.4rem;
+            position: relative;
             animation: fadeUp 0.55s ease both;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transition: border-color 0.2s ease;
         }
-        .fcard:hover {
-            border-color: rgba(255, 45, 85, 0.28);
-            transform: translateY(-2px);
-            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+        .fcard::before {
+            content: ""; position: absolute; top: -1px; left: -1px;
+            width: 26px; height: 26px;
+            border-top: 2px solid rgba(255, 45, 85, 0.5);
+            border-left: 2px solid rgba(255, 45, 85, 0.5);
+            border-top-left-radius: 12px;
         }
+        .fcard:hover {border-color: rgba(255, 45, 85, 0.30);}
         .fcard-wide {grid-column: span 2;}
         .fcard-h {display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.6rem;}
         .fcard-ic {
-            width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
-            background: rgba(255, 45, 85, 0.10);
-            border: 1px solid rgba(255, 45, 85, 0.3);
+            width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+            background: rgba(255, 45, 85, 0.08);
+            border: 1px solid rgba(255, 45, 85, 0.30);
             display: flex; align-items: center; justify-content: center;
-            color: #ff6b6b;
+            color: var(--red-soft);
         }
-        .fcard-t {font-weight: 600; font-size: 0.95rem; color: #fff;}
-        .fcard-s {font-size: 0.74rem; color: #6b6b76; margin-top: 0.1rem;}
+        .fcard-t {font-weight: 600; font-size: 0.95rem; color: var(--txt);}
+        .fcard-s {font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 0.15rem;}
 
         .fchart {flex: 1; display: flex; align-items: center; justify-content: center; margin: 0.4rem 0 0.2rem; min-height: 170px;}
         .fchart svg {width: 100%; height: 100%; display: block;}
@@ -171,18 +210,20 @@ st.html(
 
         .mini-stats {
             display: flex; gap: 0.55rem; flex-wrap: wrap;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--line);
             padding-top: 0.65rem; margin-top: 0.5rem;
         }
         .chip {
-            font-size: 0.66rem; font-weight: 500;
-            padding: 0.32rem 0.65rem; border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03); color: #a1a1aa;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.62rem; font-weight: 500; letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.34rem 0.6rem; border-radius: 6px;
+            border: 1px solid var(--line);
+            background: var(--input); color: var(--txt2);
         }
-        .chip b {color: #fff; font-weight: 700;}
-        .chip.up {border-color: rgba(255, 45, 85, 0.35); color: #ff9a9a;}
-        .chip.up b {color: #ff6b6b;}
+        .chip b {color: var(--txt); font-weight: 600;}
+        .chip.up {border-color: rgba(255, 45, 85, 0.35); background: rgba(255, 45, 85, 0.06); color: var(--chip-up);}
+        .chip.up b {color: var(--red-soft);}
 
         @media (max-width: 900px) {
             .bento {grid-template-columns: 1fr;}
@@ -191,188 +232,235 @@ st.html(
 
         .tgl-dot {
             width: 7px; height: 7px; border-radius: 50%;
-            background: #ff2d55; box-shadow: 0 0 8px rgba(255, 45, 85, 0.7);
-            animation: pulse 1.6s infinite;
+            background: var(--red);
+            animation: blink 2.4s ease-in-out infinite;
         }
 
-        .stat-big {font-size: 2.4rem; font-weight: 800; color: #fff; letter-spacing: -0.02em;}
-        .stat-big span {font-size: 1rem; font-weight: 500; color: #6b6b76; margin-left: 0.2rem;}
+        .stat-big {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 2.3rem; font-weight: 600; color: var(--txt);
+            letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+        }
+        .stat-big span {font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-left: 0.35rem; letter-spacing: 0.08em; text-transform: uppercase;}
         .sum-rows {margin-top: 0.9rem;}
         .sum-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0.55rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.78rem;
+            padding: 0.55rem 0; border-top: 1px solid var(--line);
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
         }
         .sum-row:first-child {border-top: none; padding-top: 0.1rem;}
-        .sum-row span {color: #8b8b96;}
-        .sum-row b {color: #fff; font-weight: 700;}
+        .sum-row span {color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.64rem;}
+        .sum-row b {color: var(--txt); font-weight: 600;}
         .up-foot {
             margin-top: auto; padding-top: 0.65rem;
             display: flex; align-items: center; gap: 0.5rem;
-            font-size: 0.68rem; color: #6b6b76;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--muted);
         }
 
         /* Console --------------------------------------------------------- */
-        .section {display: flex; align-items: center; gap: 0.8rem; margin: 2.6rem 0 1.1rem;}
-        .sec-t {font-weight: 700; font-size: 0.95rem; color: #fff; letter-spacing: 0.04em;}
-        .sec-line {flex: 1; height: 1px; background: rgba(255, 255, 255, 0.06);}
-        .sec-hint {font-size: 0.7rem; color: #6b6b76;}
+        .section {display: flex; align-items: center; gap: 0.9rem; margin: 2.8rem 0 1.1rem;}
+        .sec-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.74rem; color: var(--txt); letter-spacing: 0.14em;}
+        .sec-line {flex: 1; height: 1px; background: var(--line-strong);}
+        .sec-hint {font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--muted);}
 
         .stButton > button {
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.02);
-            color: #c4c4cc;
-            font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em;
+            font-family: 'IBM Plex Mono', monospace;
+            border-radius: 10px;
+            border: 1px solid var(--line-strong);
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            font-weight: 500; font-size: 0.7rem; letter-spacing: 0.1em;
             padding: 0.95rem 0.8rem;
-            backdrop-filter: blur(12px);
-            transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
         }
-        .stButton > button:hover {border-color: rgba(255, 107, 53, 0.55); color: #fff;}
+        .stButton > button:hover {border-color: rgba(255, 107, 83, 0.5); color: var(--btn-text-hover);}
         .stButton > button[kind="primary"] {
-            border: 1px solid rgba(255, 107, 53, 0.7);
-            background: rgba(255, 45, 85, 0.12);
-            color: #ffe4e6;
-            box-shadow: 0 0 18px rgba(255, 45, 85, 0.25);
+            border: 1px solid rgba(255, 45, 85, 0.55);
+            background: var(--btn-primary-bg);
+            color: var(--red-btn-text);
         }
-        .stButton > button[kind="primary"]:hover {border-color: #ff9a9a; color: #fff;}
+        .stButton > button[kind="primary"]:hover {border-color: var(--red-soft); color: var(--btn-text-hover);}
         .stButton > button:focus:not(:active) {box-shadow: none;}
 
         .sub-desc {
-            margin-top: -0.15rem;
-            font-size: 10.5px; font-weight: 500; letter-spacing: 0.08em;
-            text-transform: uppercase; color: #6b6b76; text-align: center;
+            margin-top: -0.05rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px; font-weight: 500; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--muted); text-align: center;
         }
 
         [data-testid="stForm"] {border: none; padding: 0; border-radius: 0;}
         [data-testid="stFormSubmitButton"] {
             width: 100% !important;
-            background: rgba(255, 45, 85, 0.16) !important;
-            border: 1px solid rgba(255, 107, 53, 0.5) !important;
-            border-radius: 12px !important;
-            color: #ffe4e6 !important;
+            background: var(--btn-primary-bg) !important;
+            border: 1px solid rgba(255, 45, 85, 0.45) !important;
+            border-radius: 10px !important;
+            color: var(--red-btn-text) !important;
+            font-family: 'IBM Plex Mono', monospace !important;
             font-weight: 600 !important;
-            font-size: 0.88rem !important;
-            letter-spacing: 0.06em !important;
+            font-size: 0.75rem !important;
+            letter-spacing: 0.14em !important;
             padding: 0.95rem 1rem !important;
-            box-shadow: 0 0 20px rgba(255, 45, 85, 0.4) !important;
         }
         [data-testid="stFormSubmitButton"]:hover {
-            background: rgba(255, 45, 85, 0.28) !important;
-            color: #fff !important;
+            background: rgba(255, 45, 85, 0.18) !important;
+            color: var(--btn-text-hover) !important;
         }
 
         /* Model picker ----------------------------------------------------- */
         [data-testid="stSelectbox"] label p {
-            font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #6b6b76;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.62rem; font-weight: 500; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--muted);
         }
         [data-testid="stSelectbox"] [data-baseweb="select"] > div {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #c4c4cc;
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--input);
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            color: var(--txt2);
         }
 
         [data-testid="stFileUploaderDropzone"] {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px dashed rgba(255, 255, 255, 0.16);
-            border-radius: 16px;
-            backdrop-filter: blur(12px);
-            transition: border-color 0.15s ease;
+            background: rgba(255, 255, 255, 0.012);
+            border: 1px dashed var(--line-strong);
+            border-radius: 12px;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
-        [data-testid="stFileUploaderDropzone"]:hover {border-color: rgba(255, 107, 53, 0.6);}
-        [data-testid="stFileUploaderDropzoneInstructions"] > div {color: #8b8b96;}
-        [data-testid="stFileUploaderDropzoneInstructions"] span {color: #ff9a9a;}
-        [data-testid="stFileUploaderDropzoneInstructions"] small {color: #6b6b76;}
+        [data-testid="stFileUploaderDropzone"]:hover {border-color: rgba(255, 45, 85, 0.5);}
+        [data-testid="stFileUploaderDropzoneInstructions"] > div {
+            font-family: 'IBM Plex Mono', monospace; color: var(--muted);
+            font-size: 0.72rem; letter-spacing: 0.06em;
+        }
+        [data-testid="stFileUploaderDropzoneInstructions"] span {color: var(--red-soft);}
+        [data-testid="stFileUploaderDropzoneInstructions"] small {color: var(--muted);}
         [data-testid="stFileUploaderDropzone"] button {
-            background: #1b1b24;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 8px;
-            color: #c4c4cc;
-            font-weight: 600; font-size: 0.72rem;
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--btn-bg);
+            border: 1px solid var(--line-strong);
+            border-radius: 7px;
+            color: var(--btn-text);
+            font-weight: 500; font-size: 0.64rem; letter-spacing: 0.06em;
         }
-        [data-testid="stFileUploaderDropzone"] button:hover {border-color: rgba(255, 107, 53, 0.55); color: #fff;}
+        [data-testid="stFileUploaderDropzone"] button:hover {border-color: rgba(255, 45, 85, 0.45); color: var(--btn-text-hover);}
 
         .file-chip {
+            font-family: 'IBM Plex Mono', monospace;
             display: inline-flex; align-items: center; gap: 0.55rem;
-            margin: 0.9rem 0 0.7rem; padding: 0.5rem 0.9rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-left: 3px solid #ff2d55;
-            border-radius: 0 10px 10px 0;
-            font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #c4c4cc;
+            margin: 0.9rem 0 0.7rem; padding: 0.55rem 0.9rem;
+            background: var(--input);
+            border: 1px solid var(--line-strong);
+            border-left: 3px solid var(--red);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.66rem; font-weight: 500; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--txt2);
         }
 
-        [data-testid="stProgress"] > div > div {background: #1b1b24; border-radius: 999px;}
+        [data-testid="stProgress"] > div > div {background: var(--track); border-radius: 999px; height: 6px;}
         [data-testid="stProgress"] > div > div > div > div {
-            background: linear-gradient(90deg, #ff2d55, #ffb020);
+            background: var(--red);
             border-radius: 999px;
-            box-shadow: 0 0 12px rgba(255, 45, 85, 0.45);
         }
         [data-testid="stProgress"] p {
-            font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em;
-            text-transform: uppercase; color: #8b8b96;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.64rem; font-weight: 500; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--muted);
         }
 
         [data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1rem 1.1rem;
-            backdrop-filter: blur(12px);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 1.1rem 1.15rem;
             animation: fadeUp 0.45s ease both;
         }
-        [data-testid="stMetricValue"] {font-weight: 800; color: #fff;}
+        [data-testid="stMetricValue"] {font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--txt); font-variant-numeric: tabular-nums;}
         [data-testid="stMetricLabel"] {
-            font-size: 0.62rem; font-weight: 500;
-            letter-spacing: 0.14em; text-transform: uppercase; color: #6b6b76;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.6rem; font-weight: 500;
+            letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
         }
 
         .result-banner {
+            font-family: 'IBM Plex Mono', monospace;
             display: flex; align-items: center; gap: 0.8rem;
-            margin: 0.8rem 0 1rem; padding: 0.9rem 1.05rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-left: 3px solid #ff2d55;
-            border-radius: 12px;
-            font-size: 0.74rem; font-weight: 500; letter-spacing: 0.05em;
-            text-transform: uppercase; color: #c4c4cc;
+            margin: 0.8rem 0 1rem; padding: 0.95rem 1.1rem;
+            background: var(--input);
+            border: 1px solid var(--line-strong);
+            border-left: 3px solid var(--amber);
+            border-radius: 8px;
+            font-size: 0.66rem; font-weight: 500; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--txt2);
             animation: fadeUp 0.45s ease both;
         }
-        .result-banner b {color: #ff9a9a; font-weight: 700;}
+        .result-banner b {color: var(--amber); font-weight: 600;}
 
         [data-testid="stDownloadButton"] > button {
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.02);
-            color: #c4c4cc;
-            font-weight: 600; font-size: 0.8rem;
-            letter-spacing: 0.06em; text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+            border-radius: 10px;
+            border: 1px solid var(--line-strong);
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            font-weight: 500; font-size: 0.7rem;
+            letter-spacing: 0.1em; text-transform: uppercase;
             padding: 0.95rem 1rem;
             transition: border-color 0.15s ease, color 0.15s ease;
         }
-        [data-testid="stDownloadButton"] > button:hover {border-color: rgba(255, 107, 53, 0.55); color: #fff;}
+        [data-testid="stDownloadButton"] > button:hover {border-color: rgba(255, 45, 85, 0.45); color: var(--btn-text-hover);}
 
         /* Helper text ---------------------------------------------------------- */
         .helper {
-            margin-top: 0.55rem; font-size: 0.76rem; color: #6b6b76;
+            margin-top: 0.55rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.64rem; letter-spacing: 0.04em; color: var(--muted);
+            line-height: 1.6;
         }
-        .helper em {color: #ff9a9a; font-style: normal; font-weight: 600;}
+        .helper em {color: var(--red-soft); font-style: normal; font-weight: 500;}
+
+        .await {
+            margin-top: 1rem; padding: 2.8rem 1.5rem; text-align: center;
+            border: 1px dashed var(--line-strong);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.012);
+            animation: fadeUp 0.5s ease both;
+        }
+        .await-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.3em; color: var(--txt);}
+        .await-s {font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase;}
+
+        .stCheckbox label p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--txt2);
+        }
+        .stCheckbox label > div:not([data-testid="stWidgetLabel"]) {background: var(--switch-track);}
+        .stCheckbox label > div:not([data-testid="stWidgetLabel"]) > div {background: var(--switch-thumb);}
+        .stCheckbox label:has(input:checked) > div:not([data-testid="stWidgetLabel"]) {background: var(--switch-on);}
+        .stCheckbox label:has(input:checked) > div:not([data-testid="stWidgetLabel"]) > div {background: var(--red);}
 
         /* Dataframe + alerts ------------------------------------------------------ */
         [data-testid="stDataFrame"] {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--panel);
+            border: 1px solid var(--line);
             border-radius: 12px;
             padding: 0.35rem;
         }
+        [data-testid="stDataFrame"] * {font-family: 'IBM Plex Mono', monospace !important;}
+        [data-testid="stDataFrame"] [role="columnheader"] span {
+            font-size: 10px !important;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted) !important;
+        }
         [data-testid="stAlert"] {
-            background: rgba(255, 45, 85, 0.08);
-            border: 1px solid rgba(255, 45, 85, 0.4);
-            border-radius: 12px;
-            color: #ffc4c4;
+            background: rgba(255, 45, 85, 0.07);
+            border: 1px solid rgba(255, 45, 85, 0.35);
+            border-left: 3px solid var(--red);
+            border-radius: 8px;
+            color: var(--alert-text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
         }
     </style>
     """,
@@ -381,16 +469,69 @@ st.html(
 # ---------------------------------------------------------------------------
 # Top bar
 # ---------------------------------------------------------------------------
-st.html(
-    """
-    <div class="topbar">
-        <div class="tb-l">
-            <div class="logo-mark">R</div>
-            <div class="tb-name">REDSHIFT</div>
+st.session_state.setdefault("theme", "dark")
+
+top_l, top_r = st.columns([3.2, 1], gap="medium", vertical_alignment="center")
+with top_l:
+    st.html(
+        """
+        <div class="topbar">
+            <div class="tb-l">
+                <div class="logo-mark">R</div>
+                <div class="tb-name">REDSHIFT</div>
+                <div class="tb-div"></div>
+                <div class="tb-sub">TRAIN CONDITION MONITORING</div>
+            </div>
+            <div class="tb-ver">CONSOLE · 2.1</div>
         </div>
-    </div>
-    """,
-)
+        """,
+    )
+with top_r:
+    light_mode = st.toggle("Light mode", key="theme_toggle")
+
+theme = "light" if light_mode else "dark"
+st.session_state["theme"] = theme
+if theme == "light":
+    st.html(
+        """
+        <style>
+            :root {
+                --bg: #F4F5FA;
+                --panel: #FFFFFF;
+                --line: rgba(15, 23, 42, 0.10);
+                --line-strong: rgba(15, 23, 42, 0.16);
+                --txt: #0F172A;
+                --txt2: #475569;
+                --muted: #64748B;
+                --red: #E11D48;
+                --red-soft: #E11D48;
+                --amber: #D97706;
+                --input: #FFFFFF;
+                --track: #E2E6EF;
+                --scroll-thumb: #C6CCD8;
+                --scroll-thumb-hover: #AEB6C4;
+                --chip-up: #E11D48;
+                --on-accent: #0F172A;
+                --red-text: #E11D48;
+                --alert-text: #BE123C;
+                --switch-track: rgba(15, 23, 42, 0.15);
+                --switch-thumb: #FFFFFF;
+                --switch-on: rgba(225, 29, 72, 0.45);
+                --btn-bg: #0F172A;
+                --btn-text: #E7E7EF;
+                --btn-text-hover: #FFFFFF;
+                --btn-primary-bg: #0F172A;
+                --red-btn-text: #FF6B81;
+            }
+            .stApp, [data-testid="stAppViewContainer"] {
+                background-image:
+                    radial-gradient(820px 460px at 12% -8%, rgba(225, 29, 72, 0.05), transparent 60%),
+                    linear-gradient(rgba(15, 23, 42, 0.028) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(15, 23, 42, 0.028) 1px, transparent 1px);
+            }
+        </style>
+        """,
+    )
 
 # ---------------------------------------------------------------------------
 # Console — subsystem selector
@@ -398,9 +539,9 @@ st.html(
 st.html(
     """
     <div class="section" id="console">
-        <span class="sec-t">01 · Pick a subsystem</span>
+        <span class="sec-t">01 · PICK A SUBSYSTEM</span>
         <span class="sec-line"></span>
-        <span class="sec-hint">Tap a card — you can change it anytime</span>
+        <span class="sec-hint">CHANGE ANYTIME</span>
     </div>
     """,
 )
@@ -429,7 +570,7 @@ subsystem = st.session_state.subsystem
 st.html(
     """
     <div class="section">
-        <span class="sec-t">02 · Upload your data</span>
+        <span class="sec-t">02 · UPLOAD DATA</span>
         <span class="sec-line"></span>
         <span class="sec-hint">CSV · TXT · XLSX</span>
     </div>
@@ -445,15 +586,34 @@ uploaded_file = st.file_uploader(
 if uploaded_file is None:
     st.html(
         """
-        <div class="helper">Drag &amp; drop a file above, or click <em>browse files</em>.
-        Stuck? Any CSV, TXT or XLSX export from your subsystem works.</div>
+        <div class="await">
+            <div class="await-t">AWAITING STREAM</div>
+            <div class="await-s">no file loaded — drop a CSV · TXT · XLSX export above</div>
+        </div>
         """,
     )
 
 if uploaded_file is not None:
     size_kb = uploaded_file.size / 1024
+    stream_df = None
+    preview_html = ""
+    try:
+        stream_df = dp.load_stream(io.BytesIO(uploaded_file.getvalue()))
+        span_s = (stream_df["t"].iloc[-1] - stream_df["t"].iloc[0]).total_seconds()
+        rate_hz = (
+            1000.0 / float(stream_df["dt_ms"].iloc[1:].mean()) if len(stream_df) > 2 else 0.0
+        )
+        n_gaps = int((stream_df["dt_ms"] > dp.GAP_THRESHOLD_MS).sum())
+        preview_html = (
+            '<div class="helper" style="margin-top:0.35rem">'
+            f'Rows <em>{len(stream_df):,}</em> · span <em>{span_s / 60:.1f} min</em> · '
+            f'sample <em>{rate_hz:.0f} Hz</em> · gaps <em>{n_gaps}</em></div>'
+        )
+    except Exception:
+        stream_df = None
     st.html(
-        f'<div class="file-chip">[FILE] {uploaded_file.name} &nbsp;—&nbsp; {size_kb:,.1f} KB</div>',
+        f'<div class="file-chip">[FILE] {uploaded_file.name} &nbsp;—&nbsp; {size_kb:,.1f} KB</div>'
+        f"{preview_html}",
     )
 
     with st.form("run_form", border=False):
@@ -472,21 +632,32 @@ if uploaded_file is not None:
 
         st.html(
             """
-            <div class="section">
-                <span class="sec-t">03 · Output</span>
+            <div class="section" id="output">
+                <span class="sec-t">03 · OUTPUT</span>
                 <span class="sec-line"></span>
             </div>
             """,
         )
 
         if subsystem == "Door":
-            with st.spinner("Segmenting the stream and classifying cycles..."):
-                try:
-                    preds = run_door_inference(uploaded_file, model_choice)
-                    door_error = None
-                except Exception as exc:
-                    preds = None
-                    door_error = str(exc)
+            door_error = None
+            try:
+                entry = load_door_models()["models"][model_choice]
+                df = stream_df if stream_df is not None else dp.load_stream(
+                    io.BytesIO(uploaded_file.getvalue())
+                )
+                prog = st.progress(0, text="Segmenting the stream...")
+                segs = dp.segment_stream(df)
+                prog.progress(30, text=f"{len(segs)} cycles found — classifying...")
+                preds = dp.run_inference(df, entry["model"], entry["scaler"])
+                prog.progress(75, text="Running Monte Carlo simulation...")
+                mc = dd.run_monte_carlo(preds)
+                prog.progress(100, text="Done")
+                prog.empty()
+            except Exception as exc:
+                preds = None
+                mc = None
+                door_error = str(exc)
 
             if door_error is not None:
                 st.error(f"Could not analyse this file as a Door data stream — {door_error}")
@@ -499,7 +670,6 @@ if uploaded_file is not None:
                 t_start = dp.parse_time(preds["start_time"].iloc[0])
                 t_end = dp.parse_time(preds["end_time"].iloc[-1])
                 dur_min = (t_end - t_start).total_seconds() / 60
-                mc = dd.run_monte_carlo(preds)
                 model_score = load_door_models()["scores"].get(model_choice, None)
                 model_tag = (
                     f"{model_choice} · holdout IoU-F1 {model_score:.3f}"
@@ -516,12 +686,12 @@ if uploaded_file is not None:
                                 <div class="fcard-ic">{ICONS["activity"]}</div>
                                 <div>
                                     <div class="fcard-t">Cycle timeline</div>
-                                    <div class="fcard-s">Each bar is one door cycle · red = abnormal resistance</div>
+                                    <div class="fcard-s">each bar = one cycle · red = abnormal resistance</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.timeline_svg(preds), 200)
+                chart_frame(dd.timeline_svg(preds, theme=theme), 200)
                 st.html(
                     f"""
                             <div class="mini-stats">
@@ -542,7 +712,7 @@ if uploaded_file is not None:
                             </div>
                             <div class="stat-big">{n_total}<span>cycles</span></div>
                             <div class="sum-rows">
-                                <div class="sum-row"><span>Abnormal</span><b style="color:#ff6b6b">{n_abnormal}</b></div>
+                                <div class="sum-row"><span>Abnormal</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
                                 <div class="sum-row"><span>Normal</span><b>{n_normal}</b></div>
                                 <div class="sum-row"><span>Mean confidence</span><b>{mean_conf * 100:.0f}%</b></div>
                                 <div class="sum-row"><span>Stream length</span><b>{dur_min:.0f} min</b></div>
@@ -560,7 +730,7 @@ if uploaded_file is not None:
                             </div>
                     """,
                 )
-                chart_frame(dd.mc_hist_svg(mc), 280)
+                chart_frame(dd.mc_hist_svg(mc, theme=theme), 300)
                 st.html(
                     f"""
                             <div class="mini-stats">
@@ -575,15 +745,15 @@ if uploaded_file is not None:
                                 <div class="fcard-ic">{ICONS["pulse"]}</div>
                                 <div>
                                     <div class="fcard-t">Cycle risk score</div>
-                                    <div class="fcard-s">Model P(abnormal) per cycle</div>
+                                    <div class="fcard-s">model P(abnormal) per cycle · 10 bins</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.risk_hist_svg(preds), 260)
+                chart_frame(dd.risk_hist_svg(preds, theme=theme), 260)
                 st.html(
                     f"""
-                            <div class="up-foot"><span class="tgl-dot"></span>Risk re-sampled in the simulation</div>
+                            <div class="up-foot"><span class="tgl-dot"></span>risk re-sampled in the simulation</div>
                         </div>
 
                         <div class="fcard fcard-wide">
@@ -596,7 +766,7 @@ if uploaded_file is not None:
                             </div>
                     """,
                 )
-                chart_frame(dd.survival_svg(mc), 280)
+                chart_frame(dd.survival_svg(mc, theme=theme), 300)
                 st.html(
                     f"""
                             <div class="mini-stats">
@@ -611,7 +781,7 @@ if uploaded_file is not None:
                                 <div class="fcard-ic">{ICONS["clock"]}</div>
                                 <div>
                                     <div class="fcard-t">Forecast summary</div>
-                                    <div class="fcard-s">From the Monte Carlo run</div>
+                                    <div class="fcard-s">from the Monte Carlo run</div>
                                 </div>
                             </div>
                             <div class="sum-rows" style="margin-top:0.4rem">
@@ -632,22 +802,38 @@ if uploaded_file is not None:
                 st.html(
                     """
                     <div class="section">
-                        <span class="sec-t">Predictions table</span>
+                        <span class="sec-t">PREDICTIONS TABLE</span>
                         <span class="sec-line"></span>
                     </div>
                     """,
                 )
+                disp = preds.copy()
+                disp["flag"] = np.where(
+                    disp["status"] == dp.LABEL_ABNORMAL, "● abnormal", "—"
+                )
+                show_ab = st.toggle("Abnormal only", key="door_filter")
+                view = disp[disp["status"] == dp.LABEL_ABNORMAL] if show_ab else disp
+
+                def _flag_rows(row):
+                    bg = (
+                        "background-color: rgba(255, 45, 85, 0.06);"
+                        if row["status"] == dp.LABEL_ABNORMAL
+                        else ""
+                    )
+                    return [bg] * len(row)
+
                 st.dataframe(
-                    preds,
+                    view.style.apply(_flag_rows, axis=1),
                     width="stretch",
                     hide_index=True,
-                    height=300,
+                    height=min(340, 44 + 35 * len(view)),
                     column_config={
                         "segment_id": st.column_config.TextColumn("Segment"),
                         "start_time": st.column_config.TextColumn("Start"),
                         "end_time": st.column_config.TextColumn("End"),
                         "operation": st.column_config.TextColumn("Operation"),
                         "status": st.column_config.TextColumn("Status"),
+                        "flag": st.column_config.TextColumn("Flag"),
                         "n_rows": st.column_config.NumberColumn("Rows"),
                         "confidence": st.column_config.ProgressColumn(
                             "Confidence",
@@ -658,12 +844,36 @@ if uploaded_file is not None:
                     },
                 )
 
+                st.html(
+                    """
+                    <div class="section">
+                        <span class="sec-t">INSPECT A CYCLE</span>
+                        <span class="sec-line"></span>
+                        <span class="sec-hint">CURRENT &amp; POSITION VS STROKE</span>
+                    </div>
+                    """,
+                )
+                insp_options = [
+                    f"{r.segment_id} · {r.operation} · {r.status} · conf {r.confidence * 100:.0f}%"
+                    for r in preds.itertuples()
+                ]
+                insp_idx = st.selectbox(
+                    "Cycle",
+                    range(len(insp_options)),
+                    format_func=lambda i: insp_options[i],
+                    key="door_inspect",
+                )
+                sel = preds.iloc[insp_idx]
+                seg_mask = (df["t"] >= dp.parse_time(sel["start_time"])) & (
+                    df["t"] <= dp.parse_time(sel["end_time"])
+                )
+                chart_frame(dd.cycle_detail_svg(df[seg_mask], sel, theme=theme), 320)
+
                 st.download_button(
                     label="Download predictions",
-                    data=preds[["start_time", "end_time", "status", "confidence"]]
-                    .rename(columns={"status": "prediction"})
-                    .to_csv(index=False)
-                    .encode("utf-8"),
+                    data=preds[
+                        ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
+                    ].to_csv(index=False).encode("utf-8"),
                     file_name="door_predictions.csv",
                     mime="text/csv",
                     width="stretch",

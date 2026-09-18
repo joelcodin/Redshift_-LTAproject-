@@ -8,7 +8,7 @@ detection problem); other subsystems (ACV, Rail Corrugation, SHM) are placeholde
 
 | File | Purpose |
 |---|---|
-| `RsFront.py` | Streamlit frontend console (tech-noir design). Run with `streamlit run RsFront.py`. Provides an upload console with a **prediction-model picker** that runs the Door inference pipeline and renders bento-card results (cycle timeline, risk histogram, Monte Carlo simulation, survival curve, predictions table + CSV download). |
+| `RsFront.py` | Streamlit frontend console (instrument-console design). Run with `streamlit run RsFront.py`. Provides an upload console with a **prediction-model picker** that runs the Door inference pipeline and renders card-based results (cycle timeline, risk histogram, Monte Carlo simulation, survival curve, predictions table + CSV download). |
 | `door_pipeline.py` | Shared core pipeline: parses the time format, segments a continuous door-controller stream into open/close cycles (gap-based split with a motion-flag safety net), extracts per-cycle features, and classifies cycles as Normal / Abnormal resistance. |
 | `train_door.py` | Training script. Segments `Train.csv`, verifies boundaries against `Train_Segments_Answer.csv`, evaluates RandomForest / GradientBoosting / XGBoost (if installed) by 5-fold holdout IoU-weighted F1, retrains **all** models, and saves `door_models.joblib`. Run with `python train_door.py`. |
 | `predict.py` | CLI inference script. Segments an input stream and writes per-cycle predictions with confidence. Usage: `python predict.py --input Test.csv --output door_predictions.csv [--model "Gradient Boosting"]`. Default model = the best-scoring one. |
