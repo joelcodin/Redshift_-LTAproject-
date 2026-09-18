@@ -926,7 +926,9 @@ if uploaded_files:
 
     with st.form("run_form", border=False):
         bundle = load_bundle(SUBSYSTEM_BUNDLES[subsystem])
-        model_names = [bundle["best"]]
+        model_names = [bundle["best"]] + [
+            m for m in bundle["models"].keys() if m != bundle["best"]
+        ]
         model_key = f"model_choice_{subsystem}"
         if st.session_state.get(model_key) not in model_names:
             st.session_state.pop(model_key, None)
