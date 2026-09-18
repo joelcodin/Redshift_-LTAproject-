@@ -3,3 +3,8 @@ numpy
 pandas
 scikit-learn
 streamlit
+scipy
+openpyxl
+pyarrow
+selenium
+webdriver-manager
