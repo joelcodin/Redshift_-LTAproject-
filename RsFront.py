@@ -875,6 +875,12 @@ uploaded_files = st.file_uploader(
 )
 uploaded_files = uploaded_files or []
 
+upload_sig = tuple((f.name, f.size) for f in uploaded_files)
+if st.session_state.get("upload_sig") != upload_sig:
+    st.session_state["upload_sig"] = upload_sig
+    st.session_state["ran"] = False
+    st.session_state["ran_batch"] = False
+
 if not uploaded_files:
     st.html(
         """
