@@ -146,6 +146,212 @@ def bars_svg(rows, theme="dark", value_fmt="{:.0f}%"):
     return svg
 
 # ---------------------------------------------------------------------------
+# Batch (multi-file) results
+# ---------------------------------------------------------------------------
+def render_batch_section(subsystem, files, model_choice, theme, submitted):
+    if not (submitted or st.session_state.get("ran_batch")):
+        return
+    st.session_state["ran_batch"] = True
+
+    st.html(
+        """
+        <div class="section">
+            <span class="sec-t">03 · BATCH OUTPUT</span>
+            <span class="sec-line"></span>
+            <span class="sec-hint">ALL FILES · AGGREGATED</span>
+        </div>
+        """,
+    )
+
+    bundle = load_bundle(SUBSYSTEM_BUNDLES[subsystem])
+    entry = bundle["models"][model_choice]
+    rows = []
+    errors = []
+
+    if subsystem == "Door":
+        for f in files:
+            try:
+                df = dp.load_stream(io.BytesIO(f.getvalue()))
+                preds = dp.run_inference(df, entry["model"], entry["scaler"])
+                n_tot = len(preds)
+                n_ab = int((preds["status"] == dp.LABEL_ABNORMAL).sum())
+                rows.append(
+                    {
+                        "file": f.name,
+                        "cycles": n_tot,
+                        "abnormal": n_ab,
+                        "rate_pct": round(n_ab / n_tot * 100, 1) if n_tot else 0.0,
+                        "mean_conf": round(float(preds["confidence"].mean()), 3),
+                    }
+                )
+            except Exception as exc:
+                errors.append((f.name, str(exc)))
+        if rows:
+            table = pd.DataFrame(rows)
+            n_ab_all = int(table["abnormal"].sum())
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span><b>{len(rows)}</b> streams analysed · <b>{n_ab_all}</b> abnormal cycles flagged across all files</span>
+                </div>
+                """,
+            )
+            st.dataframe(table, width="stretch", hide_index=True)
+            st.download_button(
+                label="Download batch predictions",
+                data=table.to_csv(index=False).encode("utf-8"),
+                file_name="door_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+            )
+
+    elif subsystem == "SHM":
+        for f in files:
+            try:
+                df_in = pd.read_csv(io.BytesIO(f.getvalue()))
+                x = df_in.iloc[:, 0].to_numpy(dtype=float)
+                feats = pd.DataFrame([sp.extract_features(x)], columns=sp.FEATURE_NAMES)
+                Xs = entry["scaler"].transform(feats)
+                pred = float(entry["model"].predict(Xs)[0])
+                if entry.get("log_target", True):
+                    pred = float(np.expm1(pred))
+                rows.append(
+                    {
+                        "file": f.name,
+                        "damage": round(max(pred, 0.0), 6),
+                        "samples": len(x),
+                    }
+                )
+            except Exception as exc:
+                errors.append((f.name, str(exc)))
+        if rows:
+            table = pd.DataFrame(rows)
+            mean_dmg = float(table["damage"].mean())
+            worst = table.loc[table["damage"].idxmax()]
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span>Mean cumulative damage <b>{mean_dmg:.4f}</b> · worst file <b>{worst['file']}</b> at <b>{worst['damage']:.4f}</b></span>
+                </div>
+                """,
+            )
+            st.dataframe(table, width="stretch", hide_index=True)
+            st.download_button(
+                label="Download batch predictions",
+                data=table.to_csv(index=False).encode("utf-8"),
+                file_name="shm_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+            )
+
+    elif subsystem == "Rail Corrugation":
+        counts = {lab: 0 for lab in rp.LABELS}
+        proba_mean = {lab: 0.0 for lab in rp.LABELS}
+        n_ok = 0
+        for f in files:
+            try:
+                df_r = rp.load_rail_file(io.BytesIO(f.getvalue()))
+                feats = rp.extract_features(df_r)
+                Xs = entry["scaler"].transform(
+                    pd.DataFrame([feats], columns=rp.FEATURE_NAMES)
+                )
+                label = rp.LABELS[int(entry["model"].predict(Xs)[0])]
+                proba = entry["model"].predict_proba(Xs)[0]
+                counts[label] += 1
+                for lab, p in zip(rp.LABELS, proba):
+                    proba_mean[lab] += float(p)
+                n_ok += 1
+                rows.append(
+                    {
+                        "file": f.name,
+                        "prediction": label,
+                        "confidence": round(float(proba.max()), 3),
+                    }
+                )
+            except Exception as exc:
+                errors.append((f.name, str(exc)))
+        if rows:
+            table = pd.DataFrame(rows)
+            dominant = max(rp.LABELS, key=lambda lab: counts[lab])
+            mean_rows = [
+                (lab, proba_mean[lab] / n_ok, lab == dominant) for lab in rp.LABELS
+            ]
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span><b>{len(rows)}</b> recordings classified · most common verdict <b>{dominant.upper()}</b> ({counts[dominant]})</span>
+                </div>
+                """,
+            )
+            chart_frame(bars_svg(mean_rows, theme=theme), 30 + 40 * len(rp.LABELS))
+            st.dataframe(table, width="stretch", hide_index=True)
+            st.download_button(
+                label="Download batch predictions",
+                data=table.to_csv(index=False).encode("utf-8"),
+                file_name="rail_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+            )
+
+    elif subsystem == "ACV":
+        proba_sum = {}
+        n_ok = 0
+        for f in files:
+            tmp_path = os.path.join(tempfile.gettempdir(), f"acv_batch_{f.name}")
+            with open(tmp_path, "wb") as fh:
+                fh.write(f.getvalue())
+            try:
+                cars, X = acvp.extract_file_features(tmp_path)
+                Xs = entry["scaler"].transform(X)
+                proba = entry["model"].predict_proba(Xs)[:, 1]
+            except Exception as exc:
+                errors.append((f.name, str(exc)))
+                continue
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            for car, p in zip(cars, proba):
+                proba_sum[car] = proba_sum.get(car, 0.0) + float(p)
+            n_ok += 1
+            order = np.argsort(-proba)
+            rows.append(
+                {
+                    "file": f.name,
+                    "top_car": f"Car {cars[int(order[0])]}",
+                    "ranking": " | ".join(str(cars[int(i)]) for i in order),
+                }
+            )
+        if rows:
+            table = pd.DataFrame(rows)
+            mean_proba = {car: p / n_ok for car, p in proba_sum.items()}
+            ranked_list = sorted(mean_proba, key=mean_proba.get, reverse=True)
+            proba_list = [mean_proba[c] for c in ranked_list]
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span>Fleet verdict — <b>CAR {ranked_list[0]}</b> · probability {proba_list[0] * 100:.0f}% across {len(rows)} cases</span>
+                </div>
+                """,
+            )
+            bar_rows = [
+                (f"Car {c}", p, i == 0)
+                for i, (c, p) in enumerate(zip(ranked_list, proba_list))
+            ]
+            chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * len(bar_rows))
+            st.dataframe(table, width="stretch", hide_index=True)
+            st.download_button(
+                label="Download batch rankings",
+                data=table.to_csv(index=False).encode("utf-8"),
+                file_name="acv_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+            )
+
+    for name, msg in errors:
+        st.error(f"{name} — {msg}")
+
+
+# ---------------------------------------------------------------------------
 # Page config
 # ---------------------------------------------------------------------------
 st.set_page_config(
@@ -661,23 +867,26 @@ st.html(
     """,
 )
 
-uploaded_file = st.file_uploader(
-    f"Upload {subsystem} data file",
+uploaded_files = st.file_uploader(
+    f"Upload {subsystem} data file(s)",
     type=["csv", "txt", "xlsx"],
+    accept_multiple_files=True,
     label_visibility="collapsed",
 )
+uploaded_files = uploaded_files or []
 
-if uploaded_file is None:
+if not uploaded_files:
     st.html(
         """
         <div class="await">
             <div class="await-t">AWAITING STREAM</div>
-            <div class="await-s">no file loaded — drop a CSV · TXT · XLSX export above</div>
+            <div class="await-s">no files loaded — drop one or more CSV · TXT · XLSX exports above</div>
         </div>
         """,
     )
 
-if uploaded_file is not None:
+if uploaded_files:
+    uploaded_file = uploaded_files[0]
     size_kb = uploaded_file.size / 1024
     stream_df = None
     preview_html = ""
@@ -695,10 +904,19 @@ if uploaded_file is not None:
         )
     except Exception:
         stream_df = None
-    st.html(
-        f'<div class="file-chip">[FILE] {uploaded_file.name} &nbsp;—&nbsp; {size_kb:,.1f} KB</div>'
-        f"{preview_html}",
-    )
+    if len(uploaded_files) > 1:
+        total_kb = sum(f.size for f in uploaded_files) / 1024
+        file_list = " &nbsp;·&nbsp; ".join(f.name for f in uploaded_files)
+        st.html(
+            f'<div class="file-chip">[BATCH] {len(uploaded_files)} FILES &nbsp;—&nbsp; {total_kb:,.1f} KB TOTAL</div>'
+            f'<div class="helper" style="margin-top:0.35rem">{file_list}</div>'
+            f"{preview_html}",
+        )
+    else:
+        st.html(
+            f'<div class="file-chip">[FILE] {uploaded_file.name} &nbsp;—&nbsp; {size_kb:,.1f} KB</div>'
+            f"{preview_html}",
+        )
 
     with st.form("run_form", border=False):
         bundle = load_bundle(SUBSYSTEM_BUNDLES[subsystem])
@@ -1153,3 +1371,6 @@ if uploaded_file is not None:
                 </div>
                 """,
             )
+
+    if len(uploaded_files) > 1:
+        render_batch_section(subsystem, uploaded_files, model_choice, theme, submitted)
