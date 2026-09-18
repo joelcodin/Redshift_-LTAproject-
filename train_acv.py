@@ -16,6 +16,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 import acv_pipeline as ap
@@ -72,6 +73,9 @@ def main():
         ),
         "Gradient Boosting": lambda: GradientBoostingClassifier(
             n_estimators=200, learning_rate=0.05, max_depth=3, random_state=42,
+        ),
+        "Logistic Regression": lambda: LogisticRegression(
+            C=1.0, class_weight="balanced", max_iter=2000, random_state=42,
         ),
     }
 
