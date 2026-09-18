@@ -926,11 +926,11 @@ if uploaded_files:
 
     with st.form("run_form", border=False):
         bundle = load_bundle(SUBSYSTEM_BUNDLES[subsystem])
-        model_names = list(bundle["models"].keys())
+        model_names = [bundle["best"]]
         model_choice = st.selectbox(
             "Prediction model",
             model_names,
-            index=model_names.index(bundle["best"]),
+            index=0,
             key=f"model_choice_{subsystem}",
         )
         submitted = st.form_submit_button("Run prediction", width="stretch")
