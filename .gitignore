@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+*.joblib
 door_predictions.csv
 hexstrike-ai/
 Rail_Corrugation/
