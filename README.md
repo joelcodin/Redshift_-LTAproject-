@@ -14,20 +14,17 @@ detection problem); other subsystems (ACV, Rail Corrugation, SHM) are placeholde
 | `predict.py` | CLI inference script. Segments an input stream and writes per-cycle predictions with confidence. Usage: `python predict.py --input Test.csv --output door_predictions.csv [--model "Gradient Boosting"]`. Default model = the best-scoring one. |
 | `door_dashboard.py` | Dashboard visuals for the Streamlit console — hand-built SVG cycle timeline, risk histogram, and a Monte Carlo reliability simulation. |
 | `door_models.joblib` | Trained model bundle: `{models: {name: {model, scaler}}, scores, best, feature_names}` produced by `train_door.py`. |
-| `door_model.joblib` | Legacy single-model bundle (superseded by `door_models.joblib`). |
 | `Train.csv` | Training data — one continuous, unsegmented time-series stream of door-controller readings covering many open/close cycles. |
 | `Train_Segments_Answer.csv` | Ground-truth segments for `Train.csv` (start/end times, operation type, Normal/Abnormal status). |
-| `Test.csv` | Test data — another continuous stream; segments are not provided for this file. |
-| `door_predictions.csv` | Example output of `predict.py` on `Test.csv` (submission format: start_time, end_time, prediction, confidence). The Streamlit console downloads the answer-style format instead: `segment_id, start_time, end_time, operation, status, n_rows`. |
 | `Door Data Headers.md` | Describes every column/parameter recorded in the dataset CSVs. |
 | `Door_Subsystem_Info_Kit.md` | Full documentation of the Door Fault Diagnosis dataset and problem statement. |
-| `__pycache__/` | Compiled Python bytecode; not needed to run the project. |
+| `.gitignore` | Excludes `__pycache__/` and the generated `door_predictions.csv` from the repo. |
 | `LICENSE` | Project license. |
 
 ## Quick start
 
 ```bash
 python train_door.py                                    # train + save door_models.joblib
-python predict.py --input Test.csv --output door_predictions.csv   # run inference
+python predict.py --input <your-stream>.csv --output door_predictions.csv   # run inference
 streamlit run RsFront.py                                # launch the web console
 ```

@@ -660,9 +660,10 @@ if uploaded_file is not None:
 
                 st.download_button(
                     label="Download predictions",
-                    data=preds[
-                        ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
-                    ].to_csv(index=False).encode("utf-8"),
+                    data=preds[["start_time", "end_time", "status", "confidence"]]
+                    .rename(columns={"status": "prediction"})
+                    .to_csv(index=False)
+                    .encode("utf-8"),
                     file_name="door_predictions.csv",
                     mime="text/csv",
                     width="stretch",
