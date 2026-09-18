@@ -6,29 +6,41 @@ Run with:
 
 Instrument console: near-black drafting-grid base with signal-red accents and
 mono data type, working upload console with a prediction-model picker and
-card-based results (timeline, Monte Carlo, survival curve). The Door subsystem
-runs the real segmentation + classification pipeline (see door_pipeline.py);
-other subsystems remain placeholders.
+card-based results. All four subsystems run real models: Door (segment +
+classify + Monte Carlo), ACV (leak localisation), Rail Corrugation (3-class)
+and SHM (fatigue damage regression).
 """
 
 import io
 import os
+import tempfile
 import time
 
 import joblib
 import numpy as np
+import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
+import acv_pipeline as acvp
 import door_dashboard as dd
 import door_pipeline as dp
+import rail_pipeline as rp
+import shm_pipeline as sp
 
 SUBSYSTEMS = [
     ("Door", "[01]", "CYCLE TIMING · OBSTRUCTION EVENTS"),
-    ("ACV", "[02]", "AIR SUPPLY · TEMPERATURE DRIFT"),
-    ("Rail Corrugation", "[03]", "WEAR PATTERN · ROUGHNESS PROFILE"),
-    ("SHM", "[04]", "VIBRATION · STRUCTURAL HEALTH"),
+    ("ACV", "[02]", "REFRIGERANT LEAK LOCALISATION"),
+    ("Rail Corrugation", "[03]", "AXLE-BOX VIBRATION · CORRUGATION TYPE"),
+    ("SHM", "[04]", "DYNAMIC STRESS · FATIGUE DAMAGE"),
 ]
+
+SUBSYSTEM_BUNDLES = {
+    "Door": "door_models.joblib",
+    "ACV": "acv_models.joblib",
+    "Rail Corrugation": "rail_models.joblib",
+    "SHM": "shm_models.joblib",
+}
 
 ICONS = {
     "activity": '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
@@ -41,13 +53,13 @@ ICONS = {
 
 
 @st.cache_resource
-def load_door_models():
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "door_models.joblib")
+def load_bundle(bundle_file):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), bundle_file)
     return joblib.load(path)
 
 
 def run_door_inference(uploaded_file, model_name):
-    bundle = load_door_models()
+    bundle = load_bundle(SUBSYSTEM_BUNDLES["Door"])
     entry = bundle["models"][model_name]
     df = dp.load_stream(io.BytesIO(uploaded_file.getvalue()))
     return dp.run_inference(df, entry["model"], entry["scaler"])
@@ -63,6 +75,75 @@ def chart_frame(svg_html, height):
         height=height,
         scrolling=False,
     )
+
+
+def _theme_colors(theme):
+    if theme == "light":
+        return {
+            "grid": "rgba(15,23,42,0.10)",
+            "text": "#64748B",
+            "red": "#E11D48",
+            "amber": "#D97706",
+            "bar_track": "rgba(15,23,42,0.08)",
+        }
+    return {
+        "grid": "rgba(255,255,255,0.06)",
+        "text": "#63636E",
+        "red": "#FF2D55",
+        "amber": "#FFB020",
+        "bar_track": "rgba(255,255,255,0.06)",
+    }
+
+
+def shm_signal_svg(x, theme="dark"):
+    c = _theme_colors(theme)
+    n = min(1500, len(x))
+    idx = np.linspace(0, len(x) - 1, n).astype(int)
+    y = x[idx]
+    lim = float(np.quantile(np.abs(y), 0.999)) or 1.0
+    W, H = 900, 220
+    pad_l, pad_r, pad_t, pad_b = 40, 14, 18, 22
+    pts = []
+    for i, v in enumerate(y):
+        px = pad_l + i / (n - 1) * (W - pad_l - pad_r)
+        py = H - pad_b - (v + lim) / (2 * lim) * (H - pad_t - pad_b)
+        pts.append(f"{px:.1f},{py:.1f}")
+    poly = " ".join(pts)
+    zero_y = H - pad_b - lim / (2 * lim) * (H - pad_t - pad_b)
+    svg = (
+        f'<svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet">'
+        f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" stroke="{c["grid"]}"/>'
+        f'<polyline points="{poly}" fill="none" stroke="{c["red"]}" stroke-width="1.4"/>'
+        f'<text x="{pad_l}" y="{pad_t - 6}" font-size="10" fill="{c["text"]}">dynamic stress (downsampled)</text>'
+        f'<text x="{pad_l - 6}" y="{pad_t + 6}" font-size="9" fill="{c["text"]}">+{lim:.2f}</text>'
+        f'<text x="{pad_l - 6}" y="{H - pad_b + 2:.1f}" font-size="9" fill="{c["text"]}">-{lim:.2f}</text>'
+        "</svg>"
+    )
+    return svg
+
+
+def bars_svg(rows, theme="dark", value_fmt="{:.0f}%"):
+    """rows: list of (label, fraction 0..1, highlight)."""
+    c = _theme_colors(theme)
+    W, H = 560, 30 + 40 * len(rows)
+    pad_l, pad_r = 46, 40
+    parts = []
+    for i, (label, frac, hl) in enumerate(rows):
+        y = 26 + i * 40
+        w = max(2.0, frac * (W - pad_l - pad_r))
+        color = c["red"] if hl else c["amber"]
+        parts.append(
+            f'<text x="0" y="{y + 13}" font-size="11" fill="{c["text"]}">{label}</text>'
+            f'<rect x="{pad_l}" y="{y}" width="{W - pad_l - pad_r}" height="18" rx="4" fill="{c["bar_track"]}"/>'
+            f'<rect x="{pad_l}" y="{y}" width="{w:.1f}" height="18" rx="4" fill="{color}"/>'
+            f'<text x="{W - pad_r + 8}" y="{y + 13}" font-size="10" fill="{color}">{value_fmt.format(frac * 100)}</text>'
+        )
+    svg = (
+        f'<svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet">'
+        + "".join(parts)
+        + "</svg>"
+    )
+    return svg
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -324,7 +405,7 @@ st.html(
         }
 
         [data-testid="stFileUploaderDropzone"] {
-            background: rgba(255, 255, 255, 0.012);
+            background: var(--btn-bg);
             border: 1px dashed var(--line-strong);
             border-radius: 12px;
             transition: border-color 0.15s ease, background 0.15s ease;
@@ -423,10 +504,10 @@ st.html(
             margin-top: 1rem; padding: 2.8rem 1.5rem; text-align: center;
             border: 1px dashed var(--line-strong);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.012);
+            background: var(--btn-bg);
             animation: fadeUp 0.5s ease both;
         }
-        .await-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.3em; color: var(--txt);}
+        .await-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.3em; color: var(--btn-text-hover);}
         .await-s {font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase;}
 
         .stCheckbox label p {
@@ -525,10 +606,13 @@ if theme == "light":
             }
             .stApp, [data-testid="stAppViewContainer"] {
                 background-image:
-                    radial-gradient(820px 460px at 12% -8%, rgba(225, 29, 72, 0.05), transparent 60%),
-                    linear-gradient(rgba(15, 23, 42, 0.028) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(15, 23, 42, 0.028) 1px, transparent 1px);
+                    radial-gradient(820px 460px at 12% -8%, rgba(225, 29, 72, 0.05), transparent 60%);
             }
+            .await-s {color: #9CA3AF;}
+            [data-testid="stFileUploaderDropzone"] {border-color: rgba(15, 23, 42, 0.45);}
+            [data-testid="stFileUploaderDropzoneInstructions"] > div {color: #9CA3AF;}
+            [data-testid="stFileUploaderDropzoneInstructions"] small {color: #9CA3AF;}
+            [data-testid="stFileUploaderDropzoneInstructions"] span {color: #FF6B81;}
         </style>
         """,
     )
@@ -617,13 +701,13 @@ if uploaded_file is not None:
     )
 
     with st.form("run_form", border=False):
-        bundle = load_door_models()
+        bundle = load_bundle(SUBSYSTEM_BUNDLES[subsystem])
         model_names = list(bundle["models"].keys())
         model_choice = st.selectbox(
             "Prediction model",
             model_names,
             index=model_names.index(bundle["best"]),
-            key="door_model_choice",
+            key=f"model_choice_{subsystem}",
         )
         submitted = st.form_submit_button("Run prediction", width="stretch")
 
@@ -642,7 +726,7 @@ if uploaded_file is not None:
         if subsystem == "Door":
             door_error = None
             try:
-                entry = load_door_models()["models"][model_choice]
+                entry = load_bundle(SUBSYSTEM_BUNDLES["Door"])["models"][model_choice]
                 df = stream_df if stream_df is not None else dp.load_stream(
                     io.BytesIO(uploaded_file.getvalue())
                 )
@@ -670,7 +754,7 @@ if uploaded_file is not None:
                 t_start = dp.parse_time(preds["start_time"].iloc[0])
                 t_end = dp.parse_time(preds["end_time"].iloc[-1])
                 dur_min = (t_end - t_start).total_seconds() / 60
-                model_score = load_door_models()["scores"].get(model_choice, None)
+                model_score = load_bundle(SUBSYSTEM_BUNDLES["Door"])["scores"].get(model_choice, None)
                 model_tag = (
                     f"{model_choice} · holdout IoU-F1 {model_score:.3f}"
                     if model_score is not None
@@ -878,32 +962,194 @@ if uploaded_file is not None:
                     mime="text/csv",
                     width="stretch",
                 )
-        else:
-            prog = st.progress(0, text="Running your prediction...")
-            for pct in range(1, 101):
-                time.sleep(0.012)
-                prog.progress(pct, text=f"Running your prediction... {pct}%")
-            prog.empty()
+        elif subsystem == "SHM":
+            shm_error = None
+            try:
+                entry = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["models"][model_choice]
+                df_in = pd.read_csv(io.BytesIO(uploaded_file.getvalue()))
+                x = df_in.iloc[:, 0].to_numpy(dtype=float)
+                feats = pd.DataFrame([sp.extract_features(x)], columns=sp.FEATURE_NAMES)
+                Xs = entry["scaler"].transform(feats)
+                pred = float(entry["model"].predict(Xs)[0])
+                if entry.get("log_target", True):
+                    pred = float(np.expm1(pred))
+                damage = max(pred, 0.0)
+                shm_score = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["scores"].get(model_choice, None)
+            except Exception as exc:
+                damage = None
+                shm_error = str(exc)
 
+            if shm_error is not None:
+                st.error(f"Could not analyse this file as an SHM stress stream — {shm_error}")
+            else:
+                tag = (
+                    f"{model_choice} · CV 1−MAPE {shm_score:.3f}"
+                    if shm_score is not None
+                    else model_choice
+                )
+                st.html(
+                    f"""
+                    <div class="result-banner">
+                        <span>Cumulative fatigue damage estimate — <b>{damage:.4f}</b>
+                        · higher values mean closer to the fatigue limit.</span>
+                    </div>
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["gauge"]}</div>
+                            <div>
+                                <div class="fcard-t">Fatigue damage</div>
+                                <div class="fcard-s">{tag}</div>
+                            </div>
+                        </div>
+                        <div class="stat-big">{damage:.4f}<span>cumulative damage</span></div>
+                        <div class="sum-rows">
+                            <div class="sum-row"><span>Fatigue failure threshold</span><b>1.0000</b></div>
+                            <div class="sum-row"><span>Remaining margin</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
+                            <div class="sum-row"><span>Samples analysed</span><b>{len(x):,}</b></div>
+                        </div>
+                    </div>
+                    """,
+                )
+                chart_frame(shm_signal_svg(x, theme=theme), 240)
+                st.download_button(
+                    label="Download prediction",
+                    data=pd.DataFrame(
+                        {"file_id": [uploaded_file.name], "prediction": [round(damage, 6)]}
+                    ).to_csv(index=False).encode("utf-8"),
+                    file_name="shm_predictions.csv",
+                    mime="text/csv",
+                    width="stretch",
+                )
+
+        elif subsystem == "Rail Corrugation":
+            rail_error = None
+            try:
+                entry = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["models"][model_choice]
+                df_r = rp.load_rail_file(io.BytesIO(uploaded_file.getvalue()))
+                feats = rp.extract_features(df_r)
+                Xs = entry["scaler"].transform(
+                    pd.DataFrame([feats], columns=rp.FEATURE_NAMES)
+                )
+                label = rp.LABELS[int(entry["model"].predict(Xs)[0])]
+                proba = entry["model"].predict_proba(Xs)[0]
+                conf = float(proba.max())
+                rail_score = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["scores"].get(
+                    model_choice, None
+                )
+            except Exception as exc:
+                label = None
+                rail_error = str(exc)
+
+            if rail_error is not None:
+                st.error(f"Could not analyse this file as a Rail Corrugation recording — {rail_error}")
+            else:
+                tag = (
+                    f"{model_choice} · CV macro F1 {rail_score:.3f}"
+                    if rail_score is not None
+                    else model_choice
+                )
+                flag = label != "Normal"
+                st.html(
+                    f"""
+                    <div class="result-banner">
+                        <span>Classification — <b>{label.upper()}</b>
+                        · confidence {conf * 100:.0f}%</span>
+                    </div>
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["pulse"]}</div>
+                            <div>
+                                <div class="fcard-t">Corrugation verdict</div>
+                                <div class="fcard-s">{tag}</div>
+                            </div>
+                        </div>
+                        <div class="stat-big">{label}<span></span></div>
+                        <div class="sum-rows">
+                            <div class="sum-row"><span>Confidence</span><b>{conf * 100:.0f}%</b></div>
+                            <div class="sum-row"><span>Duration</span><b>1.0 s · 10 kHz</b></div>
+                        </div>
+                    </div>
+                    """,
+                )
+                bar_rows = [(lab, float(p), lab == label) for lab, p in zip(rp.LABELS, proba)]
+                chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * 3)
+                st.download_button(
+                    label="Download prediction",
+                    data=pd.DataFrame(
+                        {"file_id": [uploaded_file.name], "prediction": [label]}
+                    ).to_csv(index=False).encode("utf-8"),
+                    file_name="rail_predictions.csv",
+                    mime="text/csv",
+                    width="stretch",
+                )
+
+        elif subsystem == "ACV":
+            acv_error = None
+            ranked = None
+            proba = None
+            try:
+                entry = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["models"][model_choice]
+                tmp_path = os.path.join(tempfile.gettempdir(), f"acv_upload_{uploaded_file.name}")
+                with open(tmp_path, "wb") as f:
+                    f.write(uploaded_file.getvalue())
+                try:
+                    ranked, proba = acvp.run_inference(tmp_path, entry["model"], entry["scaler"])
+                finally:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                acv_score = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["scores"].get(model_choice, None)
+            except Exception as exc:
+                acv_error = str(exc)
+
+            if acv_error is not None:
+                st.error(f"Could not analyse this file as an ACV case — {acv_error}")
+            else:
+                tag = (
+                    f"{model_choice} · LOO rank-decay {acv_score:.3f}"
+                    if acv_score is not None
+                    else model_choice
+                )
+                order = np.argsort(-proba)
+                ranked_list = [ranked[i] for i in order]
+                proba_list = [float(proba[i]) for i in order]
+                st.html(
+                    f"""
+                    <div class="result-banner">
+                        <span>Most likely faulty car — <b>CAR {ranked_list[0]}</b>
+                        · probability {proba_list[0] * 100:.0f}%</span>
+                    </div>
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["bar"]}</div>
+                            <div>
+                                <div class="fcard-t">Car leak-probability ranking</div>
+                                <div class="fcard-s">{tag}</div>
+                            </div>
+                        </div>
+                        <div class="sum-rows">
+                            <div class="sum-row"><span>Top pick</span><b>Car {ranked_list[0]}</b></div>
+                            <div class="sum-row"><span>Runner-up</span><b>Car {ranked_list[1]}</b></div>
+                            <div class="sum-row"><span>Cars ranked</span><b>{len(ranked_list)}</b></div>
+                        </div>
+                    </div>
+                    """,
+                )
+                rows = [(f"Car {c}", p, i == 0) for i, (c, p) in enumerate(zip(ranked_list, proba_list))]
+                chart_frame(bars_svg(rows, theme=theme), 30 + 40 * len(rows))
+                st.download_button(
+                    label="Download ranking",
+                    data=pd.DataFrame(
+                        {"file_id": [uploaded_file.name], "ranked_cars": ["|".join(ranked_list)]}
+                    ).to_csv(index=False).encode("utf-8"),
+                    file_name="acv_predictions.csv",
+                    mime="text/csv",
+                    width="stretch",
+                )
+        else:
             st.html(
                 """
                 <div class="result-banner">
-                    <span>All done — here's your <b>sample output</b>. The prediction
-                    model isn't wired in yet, so these numbers are placeholders.</span>
+                    <span>This subsystem is not wired to a model yet.</span>
                 </div>
                 """,
-            )
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Health Score", "94.2")
-            m2.metric("Fault Probability", "2.4 %")
-            m3.metric("Remaining Life", "38 d")
-            m4.metric("Confidence", "97 %")
-
-            st.download_button(
-                label="Download result",
-                data="placeholder\n",
-                file_name="prediction.csv",
-                mime="text/csv",
-                width="stretch",
             )
