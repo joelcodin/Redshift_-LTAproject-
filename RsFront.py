@@ -4,11 +4,11 @@ Train Condition Monitoring — Frontend shell (design only)
 Run with:
     streamlit run RsFront.py
 
-Tech-noir landing console: deep violet/black base (#05050B), aurora hero,
-glassmorphic bento feature grid, working upload console, demo video card
-and a footer with a red bottom glow. The Door subsystem runs the real
-segmentation + classification pipeline (see door_pipeline.py); other
-subsystems remain placeholders.
+Tech-noir console: deep violet/black base (#05050B), working upload console
+with a prediction-model picker and bento-card results (timeline, Monte Carlo,
+survival curve). The Door subsystem runs the real segmentation +
+classification pipeline (see door_pipeline.py); other subsystems remain
+placeholders.
 """
 
 import io
@@ -40,15 +40,16 @@ ICONS = {
 
 
 @st.cache_resource
-def load_door_model():
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "door_model.joblib")
+def load_door_models():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "door_models.joblib")
     return joblib.load(path)
 
 
-def run_door_inference(uploaded_file):
-    bundle = load_door_model()
+def run_door_inference(uploaded_file, model_name):
+    bundle = load_door_models()
+    entry = bundle["models"][model_name]
     df = dp.load_stream(io.BytesIO(uploaded_file.getvalue()))
-    return dp.run_inference(df, bundle["model"], bundle["scaler"])
+    return dp.run_inference(df, entry["model"], entry["scaler"])
 
 
 def chart_frame(svg_html, height):
@@ -133,68 +134,6 @@ st.html(
             font-size: 0.64rem; font-weight: 500; letter-spacing: 0.1em;
             color: #71717a;
         }
-
-        /* Hero ---------------------------------------------------------- */
-        .hero {
-            position: relative; text-align: center;
-            padding: 4.6rem 0 2.4rem; overflow: hidden;
-        }
-        .aurora {
-            position: absolute; left: 50%; top: -190px;
-            width: 920px; height: 470px; transform: translateX(-50%);
-            border-radius: 50%;
-            background: radial-gradient(ellipse at center,
-                rgba(255, 45, 85, 0.38) 0%,
-                rgba(255, 107, 53, 0.20) 45%,
-                transparent 70%);
-            filter: blur(70px);
-            pointer-events: none;
-        }
-        .hero-badge {
-            display: inline-block; margin-bottom: 1.2rem;
-            border: 1px solid rgba(255, 107, 53, 0.35);
-            background: rgba(255, 45, 85, 0.08);
-            border-radius: 999px; padding: 0.35rem 0.9rem;
-            font-size: 0.68rem; font-weight: 500; letter-spacing: 0.16em;
-            text-transform: uppercase; color: #ff9a9a;
-        }
-        .hero h1 {
-            position: relative;
-            font-size: 3.3rem; font-weight: 800; letter-spacing: -0.03em;
-            line-height: 1.05; color: #fff; margin: 0;
-        }
-        .hero h1 .ind {
-            background: linear-gradient(90deg, #ff6b35, #ffb020);
-            -webkit-background-clip: text; background-clip: text; color: transparent;
-        }
-        .hero p {
-            position: relative;
-            max-width: 560px; margin: 1.05rem auto 0;
-            color: #8b8b96; font-size: 1.02rem; line-height: 1.65;
-        }
-        .hero-pills {
-            position: relative;
-            display: flex; gap: 0.6rem; justify-content: center;
-            margin-top: 1.7rem; flex-wrap: wrap;
-        }
-        .pill {
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 999px; padding: 0.35rem 0.85rem;
-            font-size: 0.72rem; color: #a1a1aa;
-        }
-        .cta {
-            position: relative;
-            display: inline-block; margin-top: 2.1rem;
-            background: rgba(255, 45, 85, 0.16);
-            border: 1px solid rgba(255, 107, 53, 0.5);
-            color: #ffe4e6;
-            padding: 0.85rem 2.1rem; border-radius: 12px;
-            font-weight: 600; font-size: 0.92rem; text-decoration: none;
-            box-shadow: 0 0 20px rgba(255, 45, 85, 0.4);
-            transition: background 0.15s ease, color 0.15s ease;
-        }
-        .cta:hover {background: rgba(255, 45, 85, 0.28); color: #fff;}
 
         /* Bento grid (prediction results) -------------------------------- */
         .bento {display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 1.2rem 0 0.4rem;}
@@ -323,6 +262,18 @@ st.html(
             color: #fff !important;
         }
 
+        /* Model picker ----------------------------------------------------- */
+        [data-testid="stSelectbox"] label p {
+            font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #6b6b76;
+        }
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #c4c4cc;
+        }
+
         [data-testid="stFileUploaderDropzone"] {
             background: rgba(255, 255, 255, 0.02);
             border: 1px dashed rgba(255, 255, 255, 0.16);
@@ -423,28 +374,6 @@ st.html(
             border-radius: 12px;
             color: #ffc4c4;
         }
-
-        /* Footer --------------------------------------------------------------- */
-        .footer {
-            position: relative; text-align: center;
-            margin-top: 4rem; padding: 3rem 0 1.2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            overflow: hidden;
-        }
-        .footer-glow {
-            position: absolute; left: 50%; bottom: -150px; transform: translateX(-50%);
-            width: 820px; height: 280px; border-radius: 50%;
-            background: radial-gradient(ellipse at center, rgba(255, 45, 85, 0.30), transparent 70%);
-            filter: blur(60px); pointer-events: none;
-        }
-        .footer-name {position: relative; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.2em; color: #e4e4e7;}
-        .footer-links {
-            position: relative;
-            display: flex; gap: 1.6rem; justify-content: center;
-            margin: 0.8rem 0 1rem;
-            font-size: 0.72rem; color: #6b6b76;
-        }
-        .footer-note {position: relative; font-size: 0.68rem; color: #4b4b55; letter-spacing: 0.08em;}
     </style>
     """,
 )
@@ -462,29 +391,6 @@ st.html(
     </div>
     """,
 )
-
-# ---------------------------------------------------------------------------
-# Hero (aurora)
-# ---------------------------------------------------------------------------
-st.html(
-    """
-    <div class="hero">
-        <div class="aurora"></div>
-        <div class="hero-badge">Real-time rail diagnostics</div>
-        <h1>Train Condition<br><span class="ind">Monitoring</span></h1>
-        <p>Upload sensor data from any subsystem and get a clear health
-        check in seconds — no setup, no waiting, just answers.</p>
-        <div class="hero-pills">
-            <span class="pill">04 subsystems</span>
-            <span class="pill">24/7 monitoring</span>
-            <span class="pill">&lt;1 s inference</span>
-            <span class="pill">99.9% uptime</span>
-        </div>
-        <a class="cta" href="#console">Start monitoring</a>
-    </div>
-    """,
-)
-
 
 # ---------------------------------------------------------------------------
 # Console — subsystem selector
@@ -551,6 +457,14 @@ if uploaded_file is not None:
     )
 
     with st.form("run_form", border=False):
+        bundle = load_door_models()
+        model_names = list(bundle["models"].keys())
+        model_choice = st.selectbox(
+            "Prediction model",
+            model_names,
+            index=model_names.index(bundle["best"]),
+            key="door_model_choice",
+        )
         submitted = st.form_submit_button("Run prediction", width="stretch")
 
     if submitted or st.session_state.get("ran"):
@@ -568,7 +482,7 @@ if uploaded_file is not None:
         if subsystem == "Door":
             with st.spinner("Segmenting the stream and classifying cycles..."):
                 try:
-                    preds = run_door_inference(uploaded_file)
+                    preds = run_door_inference(uploaded_file, model_choice)
                     door_error = None
                 except Exception as exc:
                     preds = None
@@ -586,6 +500,12 @@ if uploaded_file is not None:
                 t_end = dp.parse_time(preds["end_time"].iloc[-1])
                 dur_min = (t_end - t_start).total_seconds() / 60
                 mc = dd.run_monte_carlo(preds)
+                model_score = load_door_models()["scores"].get(model_choice, None)
+                model_tag = (
+                    f"{model_choice} · holdout IoU-F1 {model_score:.3f}"
+                    if model_score is not None
+                    else model_choice
+                )
 
                 st.html(
                     f"""
@@ -617,7 +537,7 @@ if uploaded_file is not None:
                                 <div class="fcard-ic">{ICONS["gauge"]}</div>
                                 <div>
                                     <div class="fcard-t">Analysis summary</div>
-                                    <div class="fcard-s">Model output for this stream</div>
+                                    <div class="fcard-s">{model_tag}</div>
                                 </div>
                             </div>
                             <div class="stat-big">{n_total}<span>cycles</span></div>
@@ -776,19 +696,3 @@ if uploaded_file is not None:
                 mime="text/csv",
                 width="stretch",
             )
-
-# ---------------------------------------------------------------------------
-# Footer
-# ---------------------------------------------------------------------------
-st.html(
-    """
-    <div class="footer">
-        <div class="footer-glow"></div>
-        <div class="footer-name">REDSHIFT</div>
-        <div class="footer-links">
-            <span>Console</span>
-        </div>
-        <div class="footer-note">Shell build 0.7 · model logic pending</div>
-    </div>
-    """,
-)

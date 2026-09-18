@@ -8,16 +8,17 @@ detection problem); other subsystems (ACV, Rail Corrugation, SHM) are placeholde
 
 | File | Purpose |
 |---|---|
-| `RsFront.py` | Streamlit frontend console (tech-noir design). Run with `streamlit run RsFront.py`. Provides an upload console that runs the Door inference pipeline and renders results. |
+| `RsFront.py` | Streamlit frontend console (tech-noir design). Run with `streamlit run RsFront.py`. Provides an upload console with a **prediction-model picker** that runs the Door inference pipeline and renders bento-card results (cycle timeline, risk histogram, Monte Carlo simulation, survival curve, predictions table + CSV download). |
 | `door_pipeline.py` | Shared core pipeline: parses the time format, segments a continuous door-controller stream into open/close cycles (gap-based split with a motion-flag safety net), extracts per-cycle features, and classifies cycles as Normal / Abnormal resistance. |
-| `train_door.py` | Training script. Segments `Train.csv`, verifies boundaries against `Train_Segments_Answer.csv`, compares GradientBoosting vs RandomForest by holdout IoU-weighted F1, retrains the winner, and saves `door_model.joblib`. Run with `python train_door.py`. |
-| `predict.py` | CLI inference script. Segments an input stream and writes per-cycle predictions with confidence. Usage: `python predict.py --input Test.csv --output door_predictions.csv`. |
+| `train_door.py` | Training script. Segments `Train.csv`, verifies boundaries against `Train_Segments_Answer.csv`, evaluates RandomForest / GradientBoosting / XGBoost (if installed) by 5-fold holdout IoU-weighted F1, retrains **all** models, and saves `door_models.joblib`. Run with `python train_door.py`. |
+| `predict.py` | CLI inference script. Segments an input stream and writes per-cycle predictions with confidence. Usage: `python predict.py --input Test.csv --output door_predictions.csv [--model "Gradient Boosting"]`. Default model = the best-scoring one. |
 | `door_dashboard.py` | Dashboard visuals for the Streamlit console — hand-built SVG cycle timeline, risk histogram, and a Monte Carlo reliability simulation. |
-| `door_model.joblib` | Trained model bundle (classifier + scaler + feature names) produced by `train_door.py`. |
+| `door_models.joblib` | Trained model bundle: `{models: {name: {model, scaler}}, scores, best, feature_names}` produced by `train_door.py`. |
+| `door_model.joblib` | Legacy single-model bundle (superseded by `door_models.joblib`). |
 | `Train.csv` | Training data — one continuous, unsegmented time-series stream of door-controller readings covering many open/close cycles. |
 | `Train_Segments_Answer.csv` | Ground-truth segments for `Train.csv` (start/end times, operation type, Normal/Abnormal status). |
 | `Test.csv` | Test data — another continuous stream; segments are not provided for this file. |
-| `door_predictions.csv` | Example output of `predict.py` on `Test.csv` (start_time, end_time, prediction, confidence per cycle). |
+| `door_predictions.csv` | Example output of `predict.py` on `Test.csv` (submission format: start_time, end_time, prediction, confidence). The Streamlit console downloads the answer-style format instead: `segment_id, start_time, end_time, operation, status, n_rows`. |
 | `Door Data Headers.md` | Describes every column/parameter recorded in the dataset CSVs. |
 | `Door_Subsystem_Info_Kit.md` | Full documentation of the Door Fault Diagnosis dataset and problem statement. |
 | `__pycache__/` | Compiled Python bytecode; not needed to run the project. |
@@ -26,7 +27,7 @@ detection problem); other subsystems (ACV, Rail Corrugation, SHM) are placeholde
 ## Quick start
 
 ```bash
-python train_door.py                                    # train + save door_model.joblib
+python train_door.py                                    # train + save door_models.joblib
 python predict.py --input Test.csv --output door_predictions.csv   # run inference
 streamlit run RsFront.py                                # launch the web console
 ```
