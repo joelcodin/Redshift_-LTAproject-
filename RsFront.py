@@ -874,7 +874,7 @@ st.html(
 uploaded_files = st.file_uploader(
     f"Upload {subsystem} data file(s)",
     type=["csv", "txt", "xlsx"],
-    accept_multiple_files=True,
+    accept_multiple_files=subsystem != "ACV",
     label_visibility="collapsed",
 )
 uploaded_files = uploaded_files or []
