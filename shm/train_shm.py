@@ -22,8 +22,9 @@ from sklearn.preprocessing import StandardScaler
 import shm_pipeline as sp
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-TRAIN_DIR = os.path.join(BASE, "SHM", "Train")
-LABELS_PATH = os.path.join(BASE, "SHM", "Train_Labels.csv")
+ROOT = os.path.dirname(BASE)
+TRAIN_DIR = os.path.join(ROOT, "SHM", "Train")
+LABELS_PATH = os.path.join(ROOT, "SHM", "Train_Labels.csv")
 MODELS_PATH = os.path.join(BASE, "shm_models.joblib")
 
 

@@ -22,8 +22,9 @@ from sklearn.preprocessing import StandardScaler
 import acv_pipeline as ap
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-TRAIN_DIR = os.path.join(BASE, "ACV", "Train")
-LABELS_PATH = os.path.join(BASE, "ACV", "Train_Labels.csv")
+ROOT = os.path.dirname(BASE)
+TRAIN_DIR = os.path.join(ROOT, "ACV", "Train")
+LABELS_PATH = os.path.join(ROOT, "ACV", "Train_Labels.csv")
 MODELS_PATH = os.path.join(BASE, "acv_models.joblib")
 
 

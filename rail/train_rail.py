@@ -21,8 +21,9 @@ from sklearn.preprocessing import StandardScaler
 import rail_pipeline as rp
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-TRAIN_DIR = os.path.join(BASE, "Rail_Corrugation", "Train")
-LABELS_PATH = os.path.join(BASE, "Rail_Corrugation", "Train_Labels.csv")
+ROOT = os.path.dirname(BASE)
+TRAIN_DIR = os.path.join(ROOT, "Rail_Corrugation", "Train")
+LABELS_PATH = os.path.join(ROOT, "Rail_Corrugation", "Train_Labels.csv")
 MODELS_PATH = os.path.join(BASE, "rail_models.joblib")
 
 

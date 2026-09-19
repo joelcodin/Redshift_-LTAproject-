@@ -13,6 +13,7 @@ and SHM (fatigue damage regression).
 
 import io
 import os
+import sys
 import tempfile
 import time
 
@@ -21,6 +22,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+
+for _sub in ("door", "acv", "rail", "shm"):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), _sub))
 
 import acv_pipeline as acvp
 import door_dashboard as dd
@@ -36,10 +40,10 @@ SUBSYSTEMS = [
 ]
 
 SUBSYSTEM_BUNDLES = {
-    "Door": "door_models.joblib",
-    "ACV": "acv_models.joblib",
-    "Rail Corrugation": "rail_models.joblib",
-    "SHM": "shm_models.joblib",
+    "Door": "door/door_models.joblib",
+    "ACV": "acv/acv_models.joblib",
+    "Rail Corrugation": "rail/rail_models.joblib",
+    "SHM": "shm/shm_models.joblib",
 }
 
 ICONS = {

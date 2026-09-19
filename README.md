@@ -9,24 +9,14 @@ Corrugation (3-class classification) and SHM (fatigue damage regression).
 | File | Purpose |
 |---|---|
 | `RsFront.py` | Streamlit frontend console (instrument-console design). Run with `streamlit run RsFront.py`. Upload one or multiple data files (CSV · TXT · XLSX), pick a prediction model, and render card-based results. Single file: full detail view (cycle timeline, risk histogram, Monte Carlo simulation, survival curve, predictions table + CSV download). Multiple files: batch output aggregated across all files with a combined CSV download. |
-| `door_pipeline.py` | Door core pipeline: parses the time format, segments a continuous door-controller stream into open/close cycles (gap-based split with a motion-flag safety net), extracts per-cycle features, and classifies cycles as Normal / Abnormal resistance. |
-| `train_door.py` | Door training script. Segments `door/Train.csv`, verifies boundaries against `door/Train_Segments_Answer.csv`, evaluates RandomForest / GradientBoosting / XGBoost (if installed) by 5-fold holdout IoU-weighted F1, retrains **all** models, and saves `door_models.joblib`. Run with `python train_door.py`. |
-| `door_dashboard.py` | Dashboard visuals for the Streamlit console — hand-built SVG cycle timeline, risk histogram, and a Monte Carlo reliability simulation. |
-| `door_models.joblib` | Door model bundle: `{models: {name: {model, scaler}}, scores, best, feature_names}` produced by `train_door.py`. |
-| `acv_pipeline.py` | ACV pipeline: per-car telemetry features (temperatures, cooling error, control-mode entropy) plus fleet-relative deviations, then leak-probability ranking of all 8 cars in a case. |
-| `train_acv.py` | ACV training script. Builds features from `ACV/Train/*.xlsx`, trains models, scores with leave-one-case-out rank-decay, and saves `acv_models.joblib`. Run with `python train_acv.py`. |
-| `acv_models.joblib` | ACV model bundle produced by `train_acv.py`. |
-| `rail_pipeline.py` | Rail pipeline: aggregates axle-box vibration/shock channels by side and sensor type (RMS, peak, kurtosis, crest factor, FFT peak magnitude/frequency) and classifies recordings as Normal / Side I / Side II. |
-| `train_rail.py` | Rail training script. Builds features from `Rail_Corrugation/Train/*.csv`, trains models, scores with macro F1, and saves `rail_models.joblib`. Run with `python train_rail.py`. |
-| `rail_models.joblib` | Rail model bundle produced by `train_rail.py`. |
-| `shm_pipeline.py` | SHM pipeline: rainflow-style cycle-range histogram, Miner's-rule damage proxies, signal statistics and exceedance counts from a dynamic-stress series; tree regressor on `log(damage)`. |
-| `train_shm.py` | SHM training script. Builds features from `SHM/Train/*.csv`, trains models, scores with MAPE, and saves `shm_models.joblib`. Run with `python train_shm.py`. |
-| `shm_models.joblib` | SHM model bundle produced by `train_shm.py`. |
 | `predict.py` | CLI inference script for all four subsystems. Usage: `python predict.py --subsystem shm --input SHM/Test --output shm_predictions.csv` (also `door`, `rail`, `acv`). |
-| `door/` | Door dataset: `Train.csv` (one continuous, unsegmented stream of door-controller readings), `Train_Segments_Answer.csv` (ground-truth segments), `Test.csv`. |
+| `door/` | Door subsystem: `door_pipeline.py` (core pipeline — time parsing, cycle segmentation, per-cycle features, classification), `door_dashboard.py` (SVG dashboard visuals + Monte Carlo simulation), `train_door.py` (trains and saves `door_models.joblib`), plus the dataset (`Train.csv`, `Train_Segments_Answer.csv`, `Test.csv`). |
+| `acv/` | ACV subsystem: `acv_pipeline.py` (per-car telemetry features + leak-probability ranking), `train_acv.py` (leave-one-case-out training, saves `acv_models.joblib`). |
+| `rail/` | Rail Corrugation subsystem: `rail_pipeline.py` (side/sensor-type aggregated features, 3-class classification), `train_rail.py` (saves `rail_models.joblib`). |
+| `shm/` | SHM subsystem: `shm_pipeline.py` (rainflow-style histogram, Miner's-rule proxies, fatigue-damage regression), `train_shm.py` (saves `shm_models.joblib`). |
+| `docs/` | Project docs: `PS3_Specifications.md`, `Door_Subsystem_Info_Kit.md`, `Door Data Headers.md`. |
 | `ACV/`, `Rail_Corrugation/`, `SHM/` | Datasets for the other three subsystems (train + test data and labels). Not committed to the repo — keep them local at the repo root. |
 | `04_Example_Submission/` | Example submission files (`acv_predictions.csv`, `door_predictions.csv`, `rail_predictions.csv`, `shm_predictions.csv`). |
-| `PS3_Specifications.md` | Problem statement and specification for the four subsystems. |
 | `.gitignore` | Excludes `__pycache__/`, `*.pyc`, generated predictions and the local dataset folders. |
 | `LICENSE` | Project license. |
 
@@ -58,10 +48,10 @@ All four: features are standardized with the saved scaler, then the trained mode
 ## Quick start
 
 ```bash
-python train_door.py                                    # train + save door_models.joblib
-python train_acv.py                                     # train + save acv_models.joblib
-python train_rail.py                                    # train + save rail_models.joblib
-python train_shm.py                                     # train + save shm_models.joblib
+python door/train_door.py                                # train + save door/door_models.joblib
+python acv/train_acv.py                                  # train + save acv/acv_models.joblib
+python rail/train_rail.py                                # train + save rail/rail_models.joblib
+python shm/train_shm.py                                  # train + save shm/shm_models.joblib
 python predict.py --subsystem shm --input SHM/Test --output shm_predictions.csv
-streamlit run RsFront.py                                # launch the web console
+streamlit run RsFront.py                                 # launch the web console
 ```

@@ -13,17 +13,21 @@ Usage:
 
 import argparse
 import os
+import sys
 
 import joblib
 import pandas as pd
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
+for _sub in ("door", "acv", "rail", "shm"):
+    sys.path.insert(0, os.path.join(BASE, _sub))
+
 SUBSYSTEMS = {
-    "door": ("door_models.joblib", "door"),
-    "shm": ("shm_models.joblib", "shm"),
-    "rail": ("rail_models.joblib", "rail"),
-    "acv": ("acv_models.joblib", "acv"),
+    "door": ("door/door_models.joblib", "door"),
+    "shm": ("shm/shm_models.joblib", "shm"),
+    "rail": ("rail/rail_models.joblib", "rail"),
+    "acv": ("acv/acv_models.joblib", "acv"),
 }
 
 

@@ -57,8 +57,8 @@ def build_models():
 
 
 def main():
-    train = dp.load_stream(os.path.join(BASE, "door", "Train.csv"))
-    ans = pd.read_csv(os.path.join(BASE, "door", "Train_Segments_Answer.csv"))
+    train = dp.load_stream(os.path.join(BASE, "Train.csv"))
+    ans = pd.read_csv(os.path.join(BASE, "Train_Segments_Answer.csv"))
     ans["s"] = ans["start_time"].apply(dp.parse_time)
     ans["e"] = ans["end_time"].apply(dp.parse_time)
 
