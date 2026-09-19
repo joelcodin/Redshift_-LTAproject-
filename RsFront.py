@@ -1339,7 +1339,7 @@ if uploaded_files:
                     else model_choice
                 )
                 order = np.argsort(-proba)
-                ranked_list = [ranked[i] for i in order]
+                ranked_list = list(ranked)
                 proba_list = [float(proba[i]) for i in order]
                 st.html(
                     f"""
