@@ -596,6 +596,17 @@ st.html(
             background-color: var(--bg);
             color: var(--txt2);
         }
+        .stApp {
+            background-image:
+                radial-gradient(620px 420px at 18% 12%, rgba(255, 45, 85, 0.10), transparent 60%),
+                radial-gradient(520px 400px at 82% 88%, rgba(255, 45, 85, 0.07), transparent 60%);
+            background-size: 135% 135%;
+            animation: nebula 18s ease-in-out infinite alternate;
+        }
+        @keyframes nebula {
+            from {background-position: 0% 0%, 100% 100%;}
+            to {background-position: 10% 6%, 86% 94%;}
+        }
 
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
@@ -680,6 +691,12 @@ st.html(
         @keyframes scan {to {left: 110%;}}
         @keyframes flow {to {background-position: -200% 0;}}
         @keyframes dash {to {transform: translateX(100%);}}
+        @keyframes glitch {
+            0%, 91%, 100% {text-shadow: none; transform: none;}
+            92% {text-shadow: 2px 0 var(--red-soft), -2px 0 var(--amber); transform: translateX(1px) skewX(-4deg);}
+            94% {text-shadow: -2px 0 var(--red-soft), 2px 0 var(--amber); transform: translateX(-1px);}
+            96% {text-shadow: 1px 0 var(--red-soft), -1px 0 var(--amber); transform: translateX(0.5px);}
+        }
 
         /* Top bar ------------------------------------------------------ */
         .topbar {display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0 0.9rem;}
@@ -701,7 +718,7 @@ st.html(
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: shine 6s linear infinite;
+            animation: shine 6s linear infinite, glitch 4.5s steps(1) infinite;
         }
         .tb-div {width: 1px; height: 16px; background: var(--line-strong);}
         .tb-sub {font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; color: var(--muted);}
@@ -740,8 +757,16 @@ st.html(
             padding: 1.3rem 1.4rem;
             position: relative;
             animation: fadeUp 0.55s ease both;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.25s ease;
+            transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.16s ease-out;
+            transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+            will-change: transform;
         }
+        .bento > .fcard:nth-child(1) {animation-delay: 0.06s;}
+        .bento > .fcard:nth-child(2) {animation-delay: 0.14s;}
+        .bento > .fcard:nth-child(3) {animation-delay: 0.22s;}
+        .bento > .fcard:nth-child(4) {animation-delay: 0.30s;}
+        .bento > .fcard:nth-child(5) {animation-delay: 0.38s;}
+        .bento > .fcard:nth-child(6) {animation-delay: 0.46s;}
         .fcard::before {
             content: ""; position: absolute; top: -1px; left: -1px;
             width: 26px; height: 26px;
@@ -758,8 +783,8 @@ st.html(
         }
         .fcard:hover {
             border-color: rgba(255, 45, 85, 0.30);
-            transform: translateY(-2px);
             box-shadow: var(--card-shadow);
+            transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-2px);
         }
         .fcard-wide {grid-column: span 2;}
         .fcard-h {display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.6rem;}
@@ -812,6 +837,7 @@ st.html(
             letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
             text-shadow: var(--stat-glow);
         }
+        .stat-big b {font-weight: 600;}
         .stat-big span {font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-left: 0.35rem; letter-spacing: 0.08em; text-transform: uppercase;}
         .sum-rows {margin-top: 0.9rem;}
         .sum-row {
@@ -861,12 +887,31 @@ st.html(
             color: var(--btn-text);
             font-weight: 500; font-size: 0.7rem; letter-spacing: 0.1em;
             padding: 0.95rem 0.8rem;
-            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative; overflow: hidden;
+            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease,
+                transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+        }
+        .stButton > button::before,
+        [data-testid="stFormSubmitButton"] button::before,
+        [data-testid="stDownloadButton"] button::before {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(120px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 45, 85, 0.30), transparent 65%);
+            opacity: 0; transition: opacity 0.2s ease;
+        }
+        .stButton > button:hover::before,
+        [data-testid="stFormSubmitButton"] button:hover::before,
+        [data-testid="stDownloadButton"] button:hover::before {opacity: 1;}
+        [data-testid="stFormSubmitButton"] button, [data-testid="stDownloadButton"] button {
+            position: relative; overflow: hidden;
         }
         .stButton > button:hover {
             border-color: rgba(255, 107, 83, 0.5); color: var(--btn-text-hover);
             box-shadow: 0 0 18px rgba(255, 45, 85, 0.22);
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.045);
+        }
+        .stButton > button:active {
+            transform: translateY(0) scale(0.97);
+            transition-duration: 0.08s;
         }
         .stButton > button[kind="primary"] {
             border: 1px solid rgba(255, 45, 85, 0.55);
@@ -1160,6 +1205,11 @@ if theme == "light":
                 --stat-glow: 0 0 24px rgba(225, 29, 72, 0.10);
             }
             .await-s {color: #9CA3AF;}
+            .stApp {
+                background-image:
+                    radial-gradient(620px 420px at 18% 12%, rgba(225, 29, 72, 0.05), transparent 60%),
+                    radial-gradient(520px 400px at 82% 88%, rgba(225, 29, 72, 0.035), transparent 60%);
+            }
             [data-testid="stFileUploaderDropzone"] {border-color: rgba(15, 23, 42, 0.45);}
             [data-testid="stFileUploaderDropzoneInstructions"] > div {color: #9CA3AF;}
             [data-testid="stFileUploaderDropzoneInstructions"] small {color: #9CA3AF;}
@@ -1395,7 +1445,7 @@ if uploaded_files:
                                     <div class="fcard-s">{model_tag}</div>
                                 </div>
                             </div>
-                            <div class="stat-big">{n_total}<span>{T("cycles")}</span></div>
+                            <div class="stat-big"><b class="count" data-val="{n_total}" data-dec="0">0</b><span>{T("cycles")}</span></div>
                             <div class="sum-rows">
                                 <div class="sum-row"><span>{T("Abnormal")}</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
                                 <div class="sum-row"><span>{T("Normal")}</span><b>{n_normal}</b></div>
@@ -1621,7 +1671,7 @@ if uploaded_files:
                                 <div class="fcard-s">{tag}</div>
                             </div>
                         </div>
-                        <div class="stat-big">{damage:.4f}<span>{T("cumulative damage")}</span></div>
+                        <div class="stat-big"><b class="count" data-val="{damage:.4f}" data-dec="4">0.0000</b><span>{T("cumulative damage")}</span></div>
                         <div class="sum-rows">
                             <div class="sum-row"><span>{T("Fatigue failure threshold")}</span><b>1.0000</b></div>
                             <div class="sum-row"><span>{T("Remaining margin")}</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
@@ -1797,4 +1847,77 @@ st.html(
         <span class="made-line"></span>
     </div>
     """,
+)
+
+# ---------------------------------------------------------------------------
+# Interactive effects (spotlight buttons, 3D card tilt, stat count-up)
+# ---------------------------------------------------------------------------
+st.html(
+    """
+    <script>
+    (function () {
+        if (window.__rsfx) return;
+        window.__rsfx = true;
+
+        var raf = null, lastBtn = null, lastCard = null;
+
+        document.addEventListener("mousemove", function (e) {
+            if (raf) return;
+            raf = requestAnimationFrame(function () {
+                raf = null;
+
+                var btn = e.target.closest("button");
+                if (btn !== lastBtn) {
+                    if (lastBtn) {
+                        lastBtn.style.setProperty("--mx", null);
+                        lastBtn.style.setProperty("--my", null);
+                    }
+                    lastBtn = btn;
+                }
+                if (btn) {
+                    var br = btn.getBoundingClientRect();
+                    btn.style.setProperty("--mx", (e.clientX - br.left) + "px");
+                    btn.style.setProperty("--my", (e.clientY - br.top) + "px");
+                }
+
+                var card = e.target.closest(".fcard");
+                if (card !== lastCard) {
+                    if (lastCard) {
+                        lastCard.style.setProperty("--rx", "0deg");
+                        lastCard.style.setProperty("--ry", "0deg");
+                    }
+                    lastCard = card;
+                }
+                if (card) {
+                    var cr = card.getBoundingClientRect();
+                    var px = (e.clientX - cr.left) / cr.width - 0.5;
+                    var py = (e.clientY - cr.top) / cr.height - 0.5;
+                    card.style.setProperty("--rx", (py * -7).toFixed(2) + "deg");
+                    card.style.setProperty("--ry", (px * 9).toFixed(2) + "deg");
+                }
+            });
+        });
+
+        function animCounts() {
+            document.querySelectorAll(".count:not([data-counted])").forEach(function (el) {
+                el.setAttribute("data-counted", "1");
+                var target = parseFloat(el.getAttribute("data-val")) || 0;
+                var dec = parseInt(el.getAttribute("data-dec") || "0", 10);
+                var t0 = performance.now(), dur = 900;
+                (function frame(now) {
+                    var p = Math.min(1, (now - t0) / dur);
+                    p = 1 - Math.pow(1 - p, 3);
+                    var v = target * p;
+                    el.textContent = dec ? v.toFixed(dec) : Math.round(v).toLocaleString("en-US");
+                    if (p < 1) requestAnimationFrame(frame);
+                })(t0);
+            });
+        }
+        animCounts();
+        new MutationObserver(function () { animCounts(); })
+            .observe(document.body, {childList: true, subtree: true});
+    })();
+    </script>
+    """,
+    unsafe_allow_javascript=True,
 )
