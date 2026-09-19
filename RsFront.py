@@ -712,6 +712,16 @@ st.html(
             color: var(--txt2);
             box-shadow: 0 0 14px rgba(255, 45, 85, 0.15);
         }
+        .tb-r {display: flex; align-items: center; gap: 0.6rem;}
+        .made-footer {
+            display: flex; align-items: center; gap: 1rem; justify-content: center;
+            margin: 3.5rem 0 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.58rem; font-weight: 500; letter-spacing: 0.22em;
+            color: var(--muted); text-transform: uppercase;
+            animation: fadeUp 0.6s ease both;
+        }
+        .made-line {flex: 0 0 90px; height: 1px; background: var(--line-strong);}
 
         /* Results grid --------------------------------------------------- */
         .bento {display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 1.2rem 0 0.4rem;}
@@ -1090,7 +1100,9 @@ with top_l:
                 <div class="tb-div"></div>
                 <div class="tb-sub">{T("TRAIN CONDITION MONITORING")}</div>
             </div>
-            <div class="tb-ver">CONSOLE</div>
+            <div class="tb-r">
+                <div class="tb-ver">CONSOLE</div>
+            </div>
         </div>
         """,
     )
@@ -1756,3 +1768,16 @@ if uploaded_files:
 
     if len(uploaded_files) > 1:
         render_batch_section(subsystem, uploaded_files, model_choice, theme, submitted)
+
+# ---------------------------------------------------------------------------
+# Footer
+# ---------------------------------------------------------------------------
+st.html(
+    """
+    <div class="made-footer">
+        <span class="made-line"></span>
+        <span>MADE BY · JOEL · JORDAN · JIREH · ELSON</span>
+        <span class="made-line"></span>
+    </div>
+    """,
+)
