@@ -877,7 +877,10 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=subsystem != "ACV",
     label_visibility="collapsed",
 )
-uploaded_files = uploaded_files or []
+if uploaded_files is None:
+    uploaded_files = []
+elif not isinstance(uploaded_files, list):
+    uploaded_files = [uploaded_files]
 
 upload_sig = tuple((f.name, f.size) for f in uploaded_files)
 if st.session_state.get("upload_sig") != upload_sig:
