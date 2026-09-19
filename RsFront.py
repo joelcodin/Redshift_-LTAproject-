@@ -549,7 +549,7 @@ st.html(
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
         :root {
-            --bg: #06060B;
+            --bg: #000000;
             --panel: #0C0C14;
             --line: rgba(255, 255, 255, 0.055);
             --line-strong: rgba(255, 255, 255, 0.10);
@@ -575,8 +575,6 @@ st.html(
             --btn-text-hover: #E7E7EF;
             --btn-primary-bg: rgba(255, 45, 85, 0.09);
             --red-btn-text: #FFC2CC;
-            --vignette: radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0, 0, 0, 0.42) 100%);
-            --scan: rgba(255, 255, 255, 0.012);
             --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 28px rgba(255, 45, 85, 0.08);
             --stat-glow: 0 0 24px rgba(255, 45, 85, 0.18);
         }
@@ -589,23 +587,7 @@ st.html(
 
         .stApp, [data-testid="stAppViewContainer"] {
             background-color: var(--bg);
-            background-image:
-                radial-gradient(820px 460px at 12% -8%, rgba(255, 45, 85, 0.06), transparent 60%),
-                linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
-            background-size: auto, 46px 46px, 46px 46px;
             color: var(--txt2);
-        }
-
-        .stApp::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 999998;
-            background:
-                var(--vignette),
-                repeating-linear-gradient(0deg, var(--scan) 0px, var(--scan) 1px, transparent 1px, transparent 3px);
         }
 
         #MainMenu {visibility: hidden;}
@@ -1155,14 +1137,8 @@ if theme == "light":
                 --btn-text-hover: #FFFFFF;
                 --btn-primary-bg: #0F172A;
                 --red-btn-text: #FF6B81;
-                --vignette: radial-gradient(120% 90% at 50% 0%, transparent 60%, rgba(15, 23, 42, 0.12) 100%);
-                --scan: rgba(15, 23, 42, 0.012);
                 --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.10), 0 0 28px rgba(225, 29, 72, 0.06);
                 --stat-glow: 0 0 24px rgba(225, 29, 72, 0.10);
-            }
-            .stApp, [data-testid="stAppViewContainer"] {
-                background-image:
-                    radial-gradient(820px 460px at 12% -8%, rgba(225, 29, 72, 0.05), transparent 60%);
             }
             .await-s {color: #9CA3AF;}
             [data-testid="stFileUploaderDropzone"] {border-color: rgba(15, 23, 42, 0.45);}
