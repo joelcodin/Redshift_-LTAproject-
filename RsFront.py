@@ -1291,6 +1291,7 @@ uploaded_files = st.file_uploader(
     type=["csv", "txt", "xlsx"],
     accept_multiple_files=subsystem != "ACV",
     label_visibility="collapsed",
+    key="data_uploader",
 )
 if uploaded_files is None:
     uploaded_files = []
