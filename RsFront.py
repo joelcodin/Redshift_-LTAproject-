@@ -181,6 +181,13 @@ ZH = {
     " across ": "（",
     " cases": " 个案例）",
     "file": "文件",
+    "file_id": "文件名",
+    "ranked_cars": "排名车厢",
+    "segment_id": "段编号",
+    "start_time": "开始时间",
+    "end_time": "结束时间",
+    "operation": "操作",
+    "n_rows": "行数",
     "cycles": "循环",
     "abnormal": "异常",
     "rate_pct": "异常率",
@@ -1556,9 +1563,19 @@ if uploaded_files:
 
                 st.download_button(
                     label=T("Download predictions"),
-                    data=preds[
-                        ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
-                    ].to_csv(index=False).encode("utf-8"),
+                    data=(
+                        preds[
+                            ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
+                        ]
+                        .assign(status=lambda d: d["status"].map(
+                            {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
+                        ))
+                        .rename(columns={k: T(k) for k in (
+                            "segment_id", "start_time", "end_time", "operation", "status", "n_rows"
+                        )})
+                        .to_csv(index=False)
+                        .encode("utf-8")
+                    ),
                     file_name="door_predictions.csv",
                     mime="text/csv",
                     width="stretch",
@@ -1617,7 +1634,7 @@ if uploaded_files:
                 st.download_button(
                     label=T("Download prediction"),
                     data=pd.DataFrame(
-                        {"file_id": [uploaded_file.name], "prediction": [round(damage, 6)]}
+                        {T("file_id"): [uploaded_file.name], T("prediction"): [round(damage, 6)]}
                     ).to_csv(index=False).encode("utf-8"),
                     file_name="shm_predictions.csv",
                     mime="text/csv",
@@ -1682,7 +1699,7 @@ if uploaded_files:
                 st.download_button(
                     label=T("Download prediction"),
                     data=pd.DataFrame(
-                        {"file_id": [uploaded_file.name], "prediction": [label]}
+                        {T("file_id"): [uploaded_file.name], T("prediction"): [T(label)]}
                     ).to_csv(index=False).encode("utf-8"),
                     file_name="rail_predictions.csv",
                     mime="text/csv",
@@ -1751,7 +1768,7 @@ if uploaded_files:
                 st.download_button(
                     label=T("Download ranking"),
                     data=pd.DataFrame(
-                        {"file_id": [uploaded_file.name], "ranked_cars": ["|".join(ranked_list)]}
+                        {T("file_id"): [uploaded_file.name], T("ranked_cars"): ["|".join(ranked_list)]}
                     ).to_csv(index=False).encode("utf-8"),
                     file_name="acv_predictions.csv",
                     mime="text/csv",
