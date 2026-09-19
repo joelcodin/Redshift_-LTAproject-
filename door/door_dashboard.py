@@ -26,6 +26,34 @@ AMBER = "#FFB020"
 ORANGE = "#FF6B35"
 SLATE = "#2E3246"
 
+# i18n (chart labels)
+_ZH = {
+    "NORMAL": "正常",
+    "ABNORMAL": "异常",
+    "CYCLES": "循环",
+    "conf": "置信度",
+    "cycle gap": "循环间隔",
+    "s": "秒",
+    "cycles · P(abnormal)": "循环 · P(异常)",
+    "mean": "均值",
+    "faults": "故障",
+    "trials": "次试验",
+    "FAULTS PER": "故障数 / 每",
+    "TRIALS": "次试验",
+    "survival · median": "生存率 · 中位数",
+    "CYCLES AHEAD WITHOUT A FAULT": "无故障持续循环数",
+    "± 95% CI BAND": "± 95% 置信区间带",
+    "MOTOR CURRENT (mA)": "电机电流 (毫安)",
+    "DOOR LEAF POSITION": "门扇位置",
+    "CONF": "置信度",
+    "Normal": "正常",
+    "Abnormal resistance": "异常阻力",
+}
+
+
+def _l(lang, en, zh):
+    return zh if lang == "zh" else en
+
 
 def _pal(theme):
     if theme == "light":
@@ -94,7 +122,7 @@ def _tick_step(span_s, target=7):
 # ---------------------------------------------------------------------------
 
 
-def timeline_svg(preds, theme="dark"):
+def timeline_svg(preds, theme="dark", lang="en"):
     P = _pal(theme)
     W, H = 1080, 186
     t0s = _parse_series(preds["start_time"])
@@ -121,7 +149,7 @@ def timeline_svg(preds, theme="dark"):
         fill = P["red"] if lab == LABEL_ABNORMAL else P["slate"]
         bars.append(
             f'<rect class="cyc" x="{x0:.1f}" y="{band_y}" width="{w:.1f}" height="{band_h}" rx="3" fill="{fill}">'
-            f"<title>{sid} · {s:%H:%M:%S}–{e:%H:%M:%S} · {lab} · conf {conf:.0%}</title></rect>"
+            f"<title>{sid} · {s:%H:%M:%S}–{e:%H:%M:%S} · {_l(lang, lab, _ZH.get(lab, lab))} · {_l(lang, 'conf', _ZH['conf'])} {conf:.0%}</title></rect>"
         )
     bars = "".join(bars)
 
@@ -150,20 +178,21 @@ def timeline_svg(preds, theme="dark"):
             px = x(mid)
             gap_marks += (
                 f'<line x1="{px:.1f}" y1="24" x2="{px:.1f}" y2="{band_y - 8}" stroke="{P["amber"]}" stroke-width="1.6"/>'
-                f"<title>cycle gap {gap_s:.0f}s</title>"
+                f"<title>{_l(lang, 'cycle gap', _ZH['cycle gap'])} {gap_s:.0f}{_l(lang, 's', _ZH['s'])}</title>"
             )
 
     legend = ""
     lx = pad_l
     for label, count, color in (("NORMAL", n_nm, P["slate"]), ("ABNORMAL", n_ab, P["red"])):
+        label_d = _l(lang, label, _ZH[label])
         legend += (
             f'<rect x="{lx}" y="12" width="9" height="9" rx="2" fill="{color}"/>'
-            f'<text x="{lx + 14}" y="20" font-size="10" fill="{P["muted"]}" letter-spacing="1">{label} {count}</text>'
+            f'<text x="{lx + 14}" y="20" font-size="10" fill="{P["muted"]}" letter-spacing="1">{label_d} {count}</text>'
         )
-        lx += 14 + (len(label) + len(str(count))) * 6.2 + 26
+        lx += 14 + (len(label_d) + len(str(count))) * 6.2 + 26
     total = (
         f'<text x="{W - pad_r}" y="20" text-anchor="end" font-size="10" fill="{P["muted"]}" '
-        f'letter-spacing="1">{len(preds)} CYCLES</text>'
+        f'letter-spacing="1">{len(preds)} {_l(lang, "CYCLES", _ZH["CYCLES"])}</text>'
     )
 
     svg = (
@@ -182,7 +211,7 @@ def timeline_svg(preds, theme="dark"):
 # ---------------------------------------------------------------------------
 
 
-def risk_hist_svg(preds, theme="dark"):
+def risk_hist_svg(preds, theme="dark", lang="en"):
     P = _pal(theme)
     W, H = 420, 248
     p_ab = _p_abnormal(preds)
@@ -210,14 +239,14 @@ def risk_hist_svg(preds, theme="dark"):
         bars += (
             f'<rect x="{x + 2:.1f}" y="{H - pad_b - h:.1f}" width="{bar_w - 4:.1f}" '
             f'height="{max(h, 1.5):.1f}" rx="3" fill="{color}">'
-            f"<title>{int(c)} cycles · P(abnormal) {edges[i] * 100:.0f}–{edges[i + 1] * 100:.0f}%</title></rect>"
+            f"<title>{int(c)} {_l(lang, 'cycles · P(abnormal)', _ZH['cycles · P(abnormal)'])} {edges[i] * 100:.0f}–{edges[i + 1] * 100:.0f}%</title></rect>"
         )
 
     mean = float(np.mean(p_ab))
     mx = pad_l + mean * plot_w
     mean_mark = (
         f'<line x1="{mx:.1f}" y1="{pad_t}" x2="{mx:.1f}" y2="{H - pad_b}" stroke="{P["amber"]}" stroke-dasharray="3 3" stroke-width="1.4"/>'
-        f'<text x="{mx:.1f}" y="{pad_t + 10}" text-anchor="middle" font-size="9" fill="{P["amber"]}">mean {mean:.2f}</text>'
+        f'<text x="{mx:.1f}" y="{pad_t + 10}" text-anchor="middle" font-size="9" fill="{P["amber"]}">{_l(lang, "mean", _ZH["mean"])} {mean:.2f}</text>'
     )
 
     xlabels = ""
@@ -245,7 +274,7 @@ def risk_hist_svg(preds, theme="dark"):
 # ---------------------------------------------------------------------------
 
 
-def run_monte_carlo(preds, n_trials=5000, horizon=1000, seed=42):
+def run_monte_carlo(preds, n_trials=5000, horizon=1000, seed=42, lang="en"):
     """Simulate `horizon` future cycles `n_trials` times.
 
     Each simulated cycle re-samples one of the analysed cycles (with its
@@ -269,13 +298,14 @@ def run_monte_carlo(preds, n_trials=5000, horizon=1000, seed=42):
     surv_lo = np.clip(surv_y - 1.96 * se, 0.0, 1.0)
     surv_hi = np.clip(surv_y + 1.96 * se, 0.0, 1.0)
 
+    word_cycles = _l(lang, "cycles", _ZH["CYCLES"])
     has_fault = first < horizon
     if has_fault.sum() > n_trials // 2:
         median_cycles = float(np.median(first[has_fault]))
-        median_cycles_disp = f"{median_cycles:,.0f} cycles"
+        median_cycles_disp = f"{median_cycles:,.0f} {word_cycles}"
     else:
         median_cycles = None
-        median_cycles_disp = f">{horizon:,} cycles"
+        median_cycles_disp = f">{horizon:,} {word_cycles}"
 
     starts = _parse_series(preds["start_time"])
     if len(starts) > 1:
@@ -284,7 +314,10 @@ def run_monte_carlo(preds, n_trials=5000, horizon=1000, seed=42):
         period_s = None
     if median_cycles and period_s:
         secs = median_cycles * period_s
-        median_hours = f"{secs / 60:.1f} min" if secs < 3600 else f"{secs / 3600:,.1f} h"
+        if secs < 3600:
+            median_hours = f"{secs / 60:.1f} {_l(lang, 'min', '分钟')}"
+        else:
+            median_hours = f"{secs / 3600:,.1f} {_l(lang, 'h', '小时')}"
     else:
         median_hours = "—"
 
@@ -313,7 +346,7 @@ def _fmt(v):
     return f"{v:,.1f}"
 
 
-def mc_hist_svg(mc, theme="dark"):
+def mc_hist_svg(mc, theme="dark", lang="en"):
     P = _pal(theme)
     W, H = 1080, 276
     counts = mc["counts"]
@@ -333,7 +366,7 @@ def mc_hist_svg(mc, theme="dark"):
         bars += (
             f'<rect x="{x + 1.5:.1f}" y="{H - pad_b - 18 - h:.1f}" width="{bar_w - 3:.1f}" '
             f'height="{max(h, 1.5):.1f}" rx="3" fill="{fill}" opacity="0.92">'
-            f"<title>{int(edges[i])}–{int(edges[i + 1])} faults: {int(c)} trials</title></rect>"
+            f"<title>{int(edges[i])}–{int(edges[i + 1])} {_l(lang, 'faults', _ZH['faults'])}: {int(c)} {_l(lang, 'trials', _ZH['trials'])}</title></rect>"
         )
 
     grid = ""
@@ -359,7 +392,7 @@ def mc_hist_svg(mc, theme="dark"):
     mean_x = pad_l + (mean - edges[0]) / (edges[-1] - edges[0]) * plot_w
     p95_x = pad_l + (mc["p95"] - edges[0]) / (edges[-1] - edges[0]) * plot_w
     sep = 22 if abs(mean_x - p95_x) < 74 else 0
-    markers = marker(mean, P["amber"], f"mean {_fmt(mean)}", 0) + marker(
+    markers = marker(mean, P["amber"], f"{_l(lang, 'mean', _ZH['mean'])} {_fmt(mean)}", 0) + marker(
         mc["p95"], P["orange"], f"P95 {_fmt(mc['p95'])}", sep
     )
 
@@ -374,11 +407,11 @@ def mc_hist_svg(mc, theme="dark"):
 
     caption = (
         f'<text x="{W - pad_r}" y="{H - 8}" text-anchor="end" font-size="9" fill="{P["muted"]}" '
-        f'letter-spacing="1">FAULTS PER {mc["horizon"]:,} CYCLES</text>'
+        f'letter-spacing="1">{_l(lang, "FAULTS PER", _ZH["FAULTS PER"])} {mc["horizon"]:,} {_l(lang, "CYCLES", _ZH["CYCLES"])}</text>'
     )
     trials = (
         f'<text x="{pad_l}" y="{H - 8}" font-size="9" fill="{P["muted"]}" '
-        f'letter-spacing="1">N = {mc["n_trials"]:,} TRIALS</text>'
+        f'letter-spacing="1">N = {mc["n_trials"]:,} {_l(lang, "TRIALS", _ZH["TRIALS"])}</text>'
     )
 
     svg = (
@@ -394,7 +427,7 @@ def mc_hist_svg(mc, theme="dark"):
 # ---------------------------------------------------------------------------
 
 
-def cycle_detail_svg(seg, meta, theme="dark"):
+def cycle_detail_svg(seg, meta, theme="dark", lang="en"):
     """Motor current and door position plotted against stroke progress for one cycle."""
     P = _pal(theme)
     W, H = 560, 300
@@ -450,6 +483,7 @@ def cycle_detail_svg(seg, meta, theme="dark"):
     )
 
     status_color = P["red_soft"] if meta["status"] == LABEL_ABNORMAL else P["muted"]
+    status_d = _l(lang, meta["status"], _ZH.get(meta["status"], meta["status"]))
     svg = (
         f'<svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet">'
         '<defs><linearGradient id="cd-a" x1="0" y1="0" x2="0" y2="1">'
@@ -460,10 +494,10 @@ def cycle_detail_svg(seg, meta, theme="dark"):
         f'<polyline points="{cur_pts}" fill="none" stroke="{P["red"]}" stroke-width="2.2" stroke-linecap="round"/>'
         f'<polygon points="{pos_area}" fill="rgba(255,176,32,0.06)"/>'
         f'<polyline points="{pos_pts}" fill="none" stroke="{P["amber"]}" stroke-width="1.8" stroke-linecap="round"/>'
-        f'<text x="{pad_l}" y="{c_top - 10}" font-size="10" fill="{P["red_soft"]}" letter-spacing="1">MOTOR CURRENT (mA)</text>'
-        f'<text x="{pad_l}" y="{p_top - 6}" font-size="10" fill="{P["amber"]}" letter-spacing="1">DOOR LEAF POSITION</text>'
+        f'<text x="{pad_l}" y="{c_top - 10}" font-size="10" fill="{P["red_soft"]}" letter-spacing="1">{_l(lang, "MOTOR CURRENT (mA)", _ZH["MOTOR CURRENT (mA)"])}</text>'
+        f'<text x="{pad_l}" y="{p_top - 6}" font-size="10" fill="{P["amber"]}" letter-spacing="1">{_l(lang, "DOOR LEAF POSITION", _ZH["DOOR LEAF POSITION"])}</text>'
         f'<text x="{W - pad_r}" y="{c_top - 10}" text-anchor="end" font-size="10" fill="{status_color}">'
-        f"{meta['status'].upper()} · CONF {float(meta['confidence']) * 100:.0f}%</text>"
+        f"{status_d.upper()} · {_l(lang, 'CONF', _ZH['CONF'])} {float(meta['confidence']) * 100:.0f}%</text>"
         f'<text x="{pad_l - 7}" y="{c_top + (c_bot - c_top) * 0.5}" text-anchor="end" font-size="9" fill="{P["muted"]}">{cur_max:.0f}</text>'
         f'<text x="{pad_l - 7}" y="{p_top + 4}" text-anchor="end" font-size="9" fill="{P["muted"]}">{pos_max:.0f}</text>'
         f"{xlabels}"
@@ -477,7 +511,7 @@ def cycle_detail_svg(seg, meta, theme="dark"):
 # ---------------------------------------------------------------------------
 
 
-def survival_svg(mc, theme="dark"):
+def survival_svg(mc, theme="dark", lang="en"):
     P = _pal(theme)
     W, H = 1080, 276
     pad_l, pad_b, pad_t, pad_r = 40, 26, 18, 14
@@ -524,7 +558,7 @@ def survival_svg(mc, theme="dark"):
     mid_y = py(0.5)
     mid = (
         f'<line x1="{pad_l}" y1="{mid_y:.1f}" x2="{W - pad_r}" y2="{mid_y:.1f}" stroke="{P["amber"]}" stroke-dasharray="4 3" stroke-width="1.3"/>'
-        f'<text x="{pad_l + 8}" y="{mid_y - 6:.1f}" font-size="10" fill="{P["amber"]}">50% survival · median {mc["median_cycles_disp"]}</text>'
+        f'<text x="{pad_l + 8}" y="{mid_y - 6:.1f}" font-size="10" fill="{P["amber"]}">50% {_l(lang, "survival · median", _ZH["survival · median"])} {mc["median_cycles_disp"]}</text>'
     )
 
     xlabels = ""
@@ -537,11 +571,11 @@ def survival_svg(mc, theme="dark"):
 
     caption = (
         f'<text x="{W - pad_r}" y="{H - 8}" text-anchor="end" font-size="9" fill="{P["muted"]}" '
-        'letter-spacing="1">CYCLES AHEAD WITHOUT A FAULT</text>'
+        f'letter-spacing="1">{_l(lang, "CYCLES AHEAD WITHOUT A FAULT", _ZH["CYCLES AHEAD WITHOUT A FAULT"])}</text>'
     )
     ci = (
         f'<text x="{pad_l}" y="{H - 8}" font-size="9" fill="{P["muted"]}" '
-        'letter-spacing="1">± 95% CI BAND</text>'
+        f'letter-spacing="1">{_l(lang, "± 95% CI BAND", _ZH["± 95% CI BAND"])}</text>'
     )
 
     svg = (

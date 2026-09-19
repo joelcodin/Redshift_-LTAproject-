@@ -55,6 +55,175 @@ ICONS = {
     "clock": '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
 }
 
+# ---------------------------------------------------------------------------
+# i18n — English -> Simplified Chinese
+# ---------------------------------------------------------------------------
+ZH = {
+    # topbar
+    "TRAIN CONDITION MONITORING": "列车状态监测",
+    "Light mode": "亮色模式",
+    "TELEMETRY": "遥测",
+    # sections
+    "01 · PICK A SUBSYSTEM": "01 · 选择子系统",
+    "CHANGE ANYTIME": "随时可切换",
+    "02 · UPLOAD DATA": "02 · 上传数据",
+    "03 · OUTPUT": "03 · 输出",
+    "03 · BATCH OUTPUT": "03 · 批量输出",
+    "ALL FILES · AGGREGATED": "所有文件 · 汇总",
+    "PREDICTIONS TABLE": "预测结果表",
+    "INSPECT A CYCLE": "检查单个循环",
+    "CURRENT &amp; POSITION VS STROKE": "电流与位置 · 相对行程",
+    # subsystems
+    "Door": "车门",
+    "Rail Corrugation": "钢轨波磨",
+    "CYCLE TIMING · OBSTRUCTION EVENTS": "循环时序 · 卡阻事件",
+    "REFRIGERANT LEAK LOCALISATION": "制冷剂泄漏定位",
+    "AXLE-BOX VIBRATION · CORRUGATION TYPE": "轴箱振动 · 波磨类型",
+    "DYNAMIC STRESS · FATIGUE DAMAGE": "动应力 · 疲劳损伤",
+    # upload / run
+    "AWAITING STREAM": "等待数据流",
+    "no files loaded — drop one or more CSV · TXT · XLSX exports above": "未加载文件 — 请将 CSV · TXT · XLSX 数据文件拖入上方区域",
+    "Prediction model": "预测模型",
+    "Run prediction": "运行预测",
+    "Abnormal only": "仅显示异常",
+    "Cycle": "循环",
+    "Segmenting the stream...": "正在分割数据流…",
+    " cycles found — classifying...": " 个循环 — 正在分类…",
+    "Running Monte Carlo simulation...": "正在运行蒙特卡洛仿真…",
+    "Done": "完成",
+    # shared cards
+    "Cycle timeline": "循环时间线",
+    "each bar = one cycle · red = abnormal resistance": "每个柱条 = 一个循环 · 红色 = 异常阻力",
+    "Rows": "行数",
+    "span": "跨度",
+    "sample": "采样",
+    "gaps": "间隔",
+    "FILES": "文件",
+    "TOTAL": "总计",
+    "Cycles": "循环",
+    "Abnormal": "异常",
+    "Normal": "正常",
+    "Abnormal resistance": "异常阻力",
+    "Abnormal rate": "异常率",
+    "Analysis summary": "分析摘要",
+    "cycles": "循环",
+    "Mean confidence": "平均置信度",
+    "Stream length": "数据流时长",
+    " cycles flagged for inspection": " 个循环已标记待检查",
+    "Monte Carlo — fault distribution": "蒙特卡洛 — 故障分布",
+    " trials × ": " 次试验 × ",
+    " future cycles": " 个未来循环",
+    "Mean": "均值",
+    "Cycle risk score": "循环风险评分",
+    "model P(abnormal) per cycle · 10 bins": "模型每循环 P(异常) · 10 区间",
+    "risk re-sampled in the simulation": "风险在仿真中重采样",
+    "Survival curve": "生存曲线",
+    "Probability of no fault vs cycles ahead": "未来循环内无故障概率",
+    "Median cycles to fault": "故障前循环中位数",
+    "Median time": "中位时间",
+    "P(≥1 in 100)": "P(≥1 / 100)",
+    "Forecast summary": "预测摘要",
+    "from the Monte Carlo run": "来自蒙特卡洛仿真",
+    "Expected faults / 1,000": "预期故障数 / 1,000",
+    "P50 faults": "P50 故障数",
+    "P95 faults": "P95 故障数",
+    "P99 faults": "P99 故障数",
+    "P(≥1 in 100 cycles)": "P(≥1 / 100 循环)",
+    "Median time to fault": "故障中位时间",
+    "1,000 future cycles": "1,000 个未来循环",
+    "Download predictions": "下载预测结果",
+    "Download prediction": "下载预测结果",
+    "Download batch predictions": "下载批量预测结果",
+    "Download ranking": "下载排名",
+    "Download batch rankings": "下载批量排名",
+    # door table
+    "Segment": "段",
+    "Start": "开始",
+    "End": "结束",
+    "Operation": "操作",
+    "Status": "状态",
+    "Flag": "标记",
+    "Rows": "行数",
+    "Confidence": "置信度",
+    "● abnormal": "● 异常",
+    # shm
+    "Cumulative fatigue damage estimate — ": "累积疲劳损伤估计 — ",
+    " · higher values mean closer to the fatigue limit.": " · 数值越高代表越接近疲劳极限。",
+    "Fatigue damage": "疲劳损伤",
+    "cumulative damage": "累积损伤",
+    "Fatigue failure threshold": "疲劳失效阈值",
+    "Remaining margin": "剩余裕度",
+    "Samples analysed": "已分析样本",
+    # rail
+    "Classification — ": "分类 — ",
+    " · confidence ": " · 置信度 ",
+    "Corrugation verdict": "波磨判定",
+    "Duration": "时长",
+    "Side I": "I 侧",
+    "Side II": "II 侧",
+    # acv
+    "Most likely faulty car — ": "最可能故障车厢 — ",
+    " · probability ": " · 概率 ",
+    "Car leak-probability ranking": "车厢泄漏概率排名",
+    "Top pick": "首选",
+    "Runner-up": "次选",
+    "Cars ranked": "已排序车厢",
+    "Car ": "车厢 ",
+    # batch
+    " streams analysed · ": " 个数据流已分析 · ",
+    " abnormal cycles flagged across all files": " 个异常循环被标记（全部文件）",
+    "Mean cumulative damage ": "平均累积损伤 ",
+    " · worst file ": " · 最差文件 ",
+    " at ": "，损伤 ",
+    " recordings classified · most common verdict ": " 条记录已分类 · 最常见判定 ",
+    "Fleet verdict — ": "车队判定 — ",
+    " · probability ": " · 概率 ",
+    " across ": "（",
+    " cases": " 个案例）",
+    "file": "文件",
+    "cycles": "循环",
+    "abnormal": "异常",
+    "rate_pct": "异常率",
+    "mean_conf": "平均置信度",
+    "damage": "损伤",
+    "samples": "样本",
+    "prediction": "预测",
+    "confidence": "置信度",
+    "top_car": "首选车厢",
+    "ranking": "排名",
+    # errors / misc
+    "Could not analyse this file as a Door data stream — ": "无法将该文件作为车门数据流进行分析 — ",
+    "Could not analyse this file as an ": "无法将该文件作为",
+    " stress stream — ": "应力数据流进行分析 — ",
+    " case — ": "案例进行分析 — ",
+    "Could not analyse this file as a Rail Corrugation recording — ": "无法将该文件作为钢轨波磨记录进行分析 — ",
+    "This subsystem is not wired to a model yet.": "该子系统尚未接入模型。",
+    "conf": "置信度",
+    "dynamic stress (downsampled)": "动应力（降采样）",
+}
+
+
+def T(text):
+    """Translate a string when the console language is Simplified Chinese."""
+    if st.session_state.get("lang") == "zh":
+        return ZH.get(text, text)
+    return text
+
+
+def TSUB(name):
+    """Translated display name for a subsystem."""
+    if st.session_state.get("lang") == "zh":
+        return {
+            "Door": "车门",
+            "ACV": "空调机组",
+            "Rail Corrugation": "钢轨波磨",
+            "SHM": "结构健康监测",
+        }.get(name, name)
+    return {
+        "ACV": "Air Conditioning Unit",
+        "SHM": "Structural Health Monitoring",
+    }.get(name, name)
+
 
 @st.cache_resource
 def load_bundle(bundle_file):
@@ -118,7 +287,7 @@ def shm_signal_svg(x, theme="dark"):
         f'<svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet">'
         f'<line x1="{pad_l}" y1="{zero_y:.1f}" x2="{W - pad_r}" y2="{zero_y:.1f}" stroke="{c["grid"]}"/>'
         f'<polyline points="{poly}" fill="none" stroke="{c["red"]}" stroke-width="1.4"/>'
-        f'<text x="{pad_l}" y="{pad_t - 6}" font-size="10" fill="{c["text"]}">dynamic stress (downsampled)</text>'
+        f'<text x="{pad_l}" y="{pad_t - 6}" font-size="10" fill="{c["text"]}">{T("dynamic stress (downsampled)")}</text>'
         f'<text x="{pad_l - 6}" y="{pad_t + 6}" font-size="9" fill="{c["text"]}">+{lim:.2f}</text>'
         f'<text x="{pad_l - 6}" y="{H - pad_b + 2:.1f}" font-size="9" fill="{c["text"]}">-{lim:.2f}</text>'
         "</svg>"
@@ -158,11 +327,11 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
     st.session_state["ran_batch"] = True
 
     st.html(
-        """
+        f"""
         <div class="section">
-            <span class="sec-t">03 · BATCH OUTPUT</span>
+            <span class="sec-t">{T("03 · BATCH OUTPUT")}</span>
             <span class="sec-line"></span>
-            <span class="sec-hint">ALL FILES · AGGREGATED</span>
+            <span class="sec-hint">{T("ALL FILES · AGGREGATED")}</span>
         </div>
         """,
     )
@@ -196,13 +365,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.html(
                 f"""
                 <div class="result-banner">
-                    <span><b>{len(rows)}</b> streams analysed · <b>{n_ab_all}</b> abnormal cycles flagged across all files</span>
+                    <span><b>{len(rows)}</b>{T(" streams analysed · ")}<b>{n_ab_all}</b>{T(" abnormal cycles flagged across all files")}</span>
                 </div>
                 """,
             )
+            table = table.rename(columns={k: T(k) for k in table.columns})
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
-                label="Download batch predictions",
+                label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8"),
                 file_name="door_predictions.csv",
                 mime="text/csv",
@@ -235,13 +405,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.html(
                 f"""
                 <div class="result-banner">
-                    <span>Mean cumulative damage <b>{mean_dmg:.4f}</b> · worst file <b>{worst['file']}</b> at <b>{worst['damage']:.4f}</b></span>
+                    <span>{T("Mean cumulative damage ")}<b>{mean_dmg:.4f}</b>{T(" · worst file ")}<b>{worst['file']}</b>{T(" at ")}<b>{worst['damage']:.4f}</b></span>
                 </div>
                 """,
             )
+            table = table.rename(columns={k: T(k) for k in table.columns})
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
-                label="Download batch predictions",
+                label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8"),
                 file_name="shm_predictions.csv",
                 mime="text/csv",
@@ -278,19 +449,22 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             table = pd.DataFrame(rows)
             dominant = max(rp.LABELS, key=lambda lab: counts[lab])
             mean_rows = [
-                (lab, proba_mean[lab] / n_ok, lab == dominant) for lab in rp.LABELS
+                (T(lab), proba_mean[lab] / n_ok, lab == dominant) for lab in rp.LABELS
             ]
             st.html(
                 f"""
                 <div class="result-banner">
-                    <span><b>{len(rows)}</b> recordings classified · most common verdict <b>{dominant.upper()}</b> ({counts[dominant]})</span>
+                    <span><b>{len(rows)}</b>{T(" recordings classified · most common verdict ")}<b>{T(dominant).upper()}</b> ({counts[dominant]})</span>
                 </div>
                 """,
             )
             chart_frame(bars_svg(mean_rows, theme=theme), 30 + 40 * len(rp.LABELS))
+            table = table.copy()
+            table["prediction"] = table["prediction"].map(T)
+            table = table.rename(columns={k: T(k) for k in table.columns})
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
-                label="Download batch predictions",
+                label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8"),
                 file_name="rail_predictions.csv",
                 mime="text/csv",
@@ -333,18 +507,23 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.html(
                 f"""
                 <div class="result-banner">
-                    <span>Fleet verdict — <b>CAR {ranked_list[0]}</b> · probability {proba_list[0] * 100:.0f}% across {len(rows)} cases</span>
+                    <span>{T("Fleet verdict — ")}<b>CAR {ranked_list[0]}</b>{T(" · probability ")}{proba_list[0] * 100:.0f}%{T(" across ")}{len(rows)}{T(" cases")}</span>
                 </div>
                 """,
             )
             bar_rows = [
-                (f"Car {c}", p, i == 0)
+                (f"{T('Car ')}{c}", p, i == 0)
                 for i, (c, p) in enumerate(zip(ranked_list, proba_list))
             ]
             chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * len(bar_rows))
+            table = table.copy()
+            table["top_car"] = table["top_car"].str.replace(
+                r"^Car ", T("Car "), regex=True
+            )
+            table = table.rename(columns={k: T(k) for k in table.columns})
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
-                label="Download batch rankings",
+                label=T("Download batch rankings"),
                 data=table.to_csv(index=False).encode("utf-8"),
                 file_name="acv_predictions.csv",
                 mime="text/csv",
@@ -396,6 +575,10 @@ st.html(
             --btn-text-hover: #E7E7EF;
             --btn-primary-bg: rgba(255, 45, 85, 0.09);
             --red-btn-text: #FFC2CC;
+            --vignette: radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0, 0, 0, 0.42) 100%);
+            --scan: rgba(255, 255, 255, 0.012);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 28px rgba(255, 45, 85, 0.08);
+            --stat-glow: 0 0 24px rgba(255, 45, 85, 0.18);
         }
 
         html {scroll-behavior: smooth;}
@@ -414,14 +597,73 @@ st.html(
             color: var(--txt2);
         }
 
+        .stApp::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999998;
+            background:
+                var(--vignette),
+                repeating-linear-gradient(0deg, var(--scan) 0px, var(--scan) 1px, transparent 1px, transparent 3px);
+        }
+
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
 
         .block-container {
-            max-width: 1160px;
+            max-width: 1360px;
             padding-top: 1.2rem;
             padding-bottom: 2rem;
+        }
+
+        /* Side rails — fill the wide-screen borders --------------------------------- */
+        .rail {
+            position: fixed;
+            top: 0; bottom: 0;
+            width: 84px;
+            z-index: 999997;
+            pointer-events: none;
+            display: flex; flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 130px 0 46px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--muted);
+            font-size: 0.56rem; letter-spacing: 0.22em; text-transform: uppercase;
+        }
+        .rail-l {left: 0; border-right: 1px solid var(--line);}
+        .rail-r {right: 0; border-left: 1px solid var(--line);}
+        .rail .vtext {
+            writing-mode: vertical-rl;
+            letter-spacing: 0.45em;
+            color: var(--muted);
+        }
+        .rail .vtext b {color: var(--red-soft); font-weight: 600;}
+        .rail .ruler {
+            flex: 1; width: 1px; margin: 26px 0;
+            background: repeating-linear-gradient(to bottom, var(--line-strong) 0 6px, transparent 6px 20px);
+            position: relative; overflow: hidden;
+        }
+        .rail .ruler::after {
+            content: ""; position: absolute; left: 0; right: 0; top: -40px; height: 40px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 45, 85, 0.9));
+            animation: railScan 4.5s linear infinite;
+        }
+        .rail .knot {
+            display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+            color: var(--muted);
+        }
+        .rail .knot .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--red);
+            box-shadow: 0 0 12px var(--red);
+            animation: blink 2.4s ease-in-out infinite;
+        }
+        @keyframes railScan {to {top: 100%;}}
+        @media (max-width: 1500px) {
+            .rail {display: none;}
         }
 
         ::-webkit-scrollbar {width: 8px;}
@@ -440,6 +682,16 @@ st.html(
             50% {opacity: 0.35;}
         }
 
+        @keyframes shine {to {background-position: 200% center;}}
+        @keyframes logoPulse {
+            0%, 100% {box-shadow: 0 0 10px rgba(255, 45, 85, 0.35);}
+            50% {box-shadow: 0 0 26px rgba(255, 45, 85, 0.75);}
+        }
+        @keyframes sweep {to {transform: translate(-50%, -50%) rotate(360deg);}}
+        @keyframes scan {to {left: 110%;}}
+        @keyframes flow {to {background-position: -200% 0;}}
+        @keyframes dash {to {transform: translateX(100%);}}
+
         /* Top bar ------------------------------------------------------ */
         .topbar {display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0 0.9rem;}
         .tb-l {display: flex; align-items: center; gap: 0.75rem;}
@@ -449,8 +701,19 @@ st.html(
             display: flex; align-items: center; justify-content: center;
             font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px;
             color: #0A0A12;
+            animation: logoPulse 3s ease-in-out infinite;
+            transition: transform 0.2s ease;
         }
-        .tb-name {font-weight: 700; font-size: 0.9rem; letter-spacing: 0.3em; color: var(--txt);}
+        .logo-mark:hover {transform: rotate(-8deg) scale(1.08);}
+        .tb-name {
+            font-weight: 700; font-size: 0.9rem; letter-spacing: 0.3em;
+            background: linear-gradient(90deg, var(--txt) 0%, var(--red-soft) 50%, var(--txt) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 6s linear infinite;
+        }
         .tb-div {width: 1px; height: 16px; background: var(--line-strong);}
         .tb-sub {font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; color: var(--muted);}
         .tb-ver {
@@ -460,6 +723,12 @@ st.html(
             border-radius: 999px; padding: 0.34rem 0.8rem;
             font-size: 0.6rem; font-weight: 500; letter-spacing: 0.12em;
             color: var(--muted);
+            transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tb-ver:hover {
+            border-color: rgba(255, 45, 85, 0.4);
+            color: var(--txt2);
+            box-shadow: 0 0 14px rgba(255, 45, 85, 0.15);
         }
 
         /* Results grid --------------------------------------------------- */
@@ -472,7 +741,7 @@ st.html(
             padding: 1.3rem 1.4rem;
             position: relative;
             animation: fadeUp 0.55s ease both;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.25s ease;
         }
         .fcard::before {
             content: ""; position: absolute; top: -1px; left: -1px;
@@ -481,7 +750,18 @@ st.html(
             border-left: 2px solid rgba(255, 45, 85, 0.5);
             border-top-left-radius: 12px;
         }
-        .fcard:hover {border-color: rgba(255, 45, 85, 0.30);}
+        .fcard::after {
+            content: ""; position: absolute; bottom: -1px; right: -1px;
+            width: 26px; height: 26px;
+            border-bottom: 2px solid rgba(255, 45, 85, 0.5);
+            border-right: 2px solid rgba(255, 45, 85, 0.5);
+            border-bottom-right-radius: 12px;
+        }
+        .fcard:hover {
+            border-color: rgba(255, 45, 85, 0.30);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
         .fcard-wide {grid-column: span 2;}
         .fcard-h {display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.6rem;}
         .fcard-ic {
@@ -531,6 +811,7 @@ st.html(
             font-family: 'IBM Plex Mono', monospace;
             font-size: 2.3rem; font-weight: 600; color: var(--txt);
             letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+            text-shadow: var(--stat-glow);
         }
         .stat-big span {font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-left: 0.35rem; letter-spacing: 0.08em; text-transform: uppercase;}
         .sum-rows {margin-top: 0.9rem;}
@@ -553,7 +834,24 @@ st.html(
         /* Console --------------------------------------------------------- */
         .section {display: flex; align-items: center; gap: 0.9rem; margin: 2.8rem 0 1.1rem;}
         .sec-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.74rem; color: var(--txt); letter-spacing: 0.14em;}
-        .sec-line {flex: 1; height: 1px; background: var(--line-strong);}
+        .sec-t::before {
+            content: ""; display: inline-block;
+            width: 8px; height: 8px; margin-right: 0.65rem;
+            border-radius: 2px;
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+            animation: blink 2.8s ease-in-out infinite;
+        }
+        .sec-line {
+            flex: 1; height: 1px; background: var(--line-strong);
+            position: relative; overflow: hidden;
+        }
+        .sec-line::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 45, 85, 0.55), transparent);
+            transform: translateX(-100%);
+            animation: dash 3.2s linear infinite;
+        }
         .sec-hint {font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--muted);}
 
         .stButton > button {
@@ -564,13 +862,18 @@ st.html(
             color: var(--btn-text);
             font-weight: 500; font-size: 0.7rem; letter-spacing: 0.1em;
             padding: 0.95rem 0.8rem;
-            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
         }
-        .stButton > button:hover {border-color: rgba(255, 107, 83, 0.5); color: var(--btn-text-hover);}
+        .stButton > button:hover {
+            border-color: rgba(255, 107, 83, 0.5); color: var(--btn-text-hover);
+            box-shadow: 0 0 18px rgba(255, 45, 85, 0.22);
+            transform: translateY(-1px);
+        }
         .stButton > button[kind="primary"] {
             border: 1px solid rgba(255, 45, 85, 0.55);
             background: var(--btn-primary-bg);
             color: var(--red-btn-text);
+            box-shadow: 0 0 16px rgba(255, 45, 85, 0.18);
         }
         .stButton > button[kind="primary"]:hover {border-color: var(--red-soft); color: var(--btn-text-hover);}
         .stButton > button:focus:not(:active) {box-shadow: none;}
@@ -647,12 +950,22 @@ st.html(
             border-radius: 0 8px 8px 0;
             font-size: 0.66rem; font-weight: 500; letter-spacing: 0.08em;
             text-transform: uppercase; color: var(--txt2);
+            position: relative; overflow: hidden;
+        }
+        .file-chip::after {
+            content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%;
+            background: linear-gradient(100deg, transparent, rgba(255, 45, 85, 0.12), transparent);
+            animation: scan 2.8s linear infinite;
+            pointer-events: none;
         }
 
         [data-testid="stProgress"] > div > div {background: var(--track); border-radius: 999px; height: 6px;}
         [data-testid="stProgress"] > div > div > div > div {
-            background: var(--red);
+            background: linear-gradient(90deg, var(--red), #FF5D7A, var(--red));
+            background-size: 200% 100%;
             border-radius: 999px;
+            animation: flow 1.6s linear infinite;
+            box-shadow: 0 0 12px rgba(255, 45, 85, 0.55);
         }
         [data-testid="stProgress"] p {
             font-family: 'IBM Plex Mono', monospace;
@@ -682,9 +995,17 @@ st.html(
             border: 1px solid var(--line-strong);
             border-left: 3px solid var(--amber);
             border-radius: 8px;
-            font-size: 0.66rem; font-weight: 500; letter-spacing: 0.06em;
+            font-size: 0.66rem; font-weight:500; letter-spacing: 0.06em;
             text-transform: uppercase; color: var(--txt2);
             animation: fadeUp 0.45s ease both;
+            position: relative;
+            box-shadow: 0 0 22px rgba(255, 176, 32, 0.06), inset 0 0 22px rgba(255, 176, 32, 0.03);
+        }
+        .result-banner::before {
+            content: ""; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+            background: var(--amber);
+            box-shadow: 0 0 10px var(--amber);
+            animation: blink 1.8s ease-in-out infinite;
         }
         .result-banner b {color: var(--amber); font-weight: 600;}
 
@@ -716,8 +1037,20 @@ st.html(
             border-radius: 12px;
             background: var(--btn-bg);
             animation: fadeUp 0.5s ease both;
+            position: relative; overflow: hidden;
         }
+        .await::before {
+            content: ""; position: absolute; left: 50%; top: 50%;
+            width: 200%; aspect-ratio: 1 / 1;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg 300deg, rgba(255, 45, 85, 0.05) 330deg, rgba(255, 45, 85, 0.22) 355deg, transparent 360deg);
+            animation: sweep 5s linear infinite;
+            pointer-events: none;
+        }
+        .await > * {position: relative;}
         .await-t {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.3em; color: var(--btn-text-hover);}
+        .await-t::after {content: "▍"; margin-left: 0.5rem; color: var(--red-soft); animation: blink 1s steps(1) infinite;}
         .await-s {font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase;}
 
         .stCheckbox label p {
@@ -744,6 +1077,7 @@ st.html(
             text-transform: uppercase;
             color: var(--muted) !important;
         }
+        [data-testid="stDataFrame"] [role="row"]:hover {background: rgba(255, 45, 85, 0.045);}
         [data-testid="stAlert"] {
             background: rgba(255, 45, 85, 0.07);
             border: 1px solid rgba(255, 45, 85, 0.35);
@@ -761,24 +1095,32 @@ st.html(
 # Top bar
 # ---------------------------------------------------------------------------
 st.session_state.setdefault("theme", "dark")
+st.session_state.setdefault("lang", "en")
 
 top_l, top_r = st.columns([3.2, 1], gap="medium", vertical_alignment="center")
 with top_l:
     st.html(
-        """
+        f"""
         <div class="topbar">
             <div class="tb-l">
                 <div class="logo-mark">R</div>
                 <div class="tb-name">REDSHIFT</div>
                 <div class="tb-div"></div>
-                <div class="tb-sub">TRAIN CONDITION MONITORING</div>
+                <div class="tb-sub">{T("TRAIN CONDITION MONITORING")}</div>
             </div>
-            <div class="tb-ver">CONSOLE · 2.1</div>
+            <div class="tb-ver">CONSOLE · 2.2</div>
         </div>
         """,
     )
 with top_r:
-    light_mode = st.toggle("Light mode", key="theme_toggle")
+    toggle_col, lang_col = st.columns([1, 1], gap="small", vertical_alignment="center")
+    with toggle_col:
+        light_mode = st.toggle(T("Light mode"), key="theme_toggle")
+    with lang_col:
+        lang_label = "中文" if st.session_state.lang == "en" else "EN"
+        if st.button(lang_label, key="lang_btn", width="stretch"):
+            st.session_state.lang = "zh" if st.session_state.lang == "en" else "en"
+            st.rerun()
 
 theme = "light" if light_mode else "dark"
 st.session_state["theme"] = theme
@@ -813,6 +1155,10 @@ if theme == "light":
                 --btn-text-hover: #FFFFFF;
                 --btn-primary-bg: #0F172A;
                 --red-btn-text: #FF6B81;
+                --vignette: radial-gradient(120% 90% at 50% 0%, transparent 60%, rgba(15, 23, 42, 0.12) 100%);
+                --scan: rgba(15, 23, 42, 0.012);
+                --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.10), 0 0 28px rgba(225, 29, 72, 0.06);
+                --stat-glow: 0 0 24px rgba(225, 29, 72, 0.10);
             }
             .stApp, [data-testid="stAppViewContainer"] {
                 background-image:
@@ -828,14 +1174,38 @@ if theme == "light":
     )
 
 # ---------------------------------------------------------------------------
+# Side rails — occupy the wide-screen borders
+# ---------------------------------------------------------------------------
+st.html(
+    f"""
+    <div class="rail rail-l">
+        <div class="vtext">REDSHIFT · <b>{T("TRAIN CONDITION MONITORING")}</b></div>
+        <div class="ruler"></div>
+        <div class="knot">
+            <div>TCM</div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    <div class="rail rail-r">
+        <div class="knot">
+            <div class="dot"></div>
+            <div>{T("TELEMETRY")}</div>
+        </div>
+        <div class="ruler"></div>
+        <div class="vtext">CSV · TXT · XLSX</div>
+    </div>
+    """,
+)
+
+# ---------------------------------------------------------------------------
 # Console — subsystem selector
 # ---------------------------------------------------------------------------
 st.html(
-    """
+    f"""
     <div class="section" id="console">
-        <span class="sec-t">01 · PICK A SUBSYSTEM</span>
+        <span class="sec-t">{T("01 · PICK A SUBSYSTEM")}</span>
         <span class="sec-line"></span>
-        <span class="sec-hint">CHANGE ANYTIME</span>
+        <span class="sec-hint">{T("CHANGE ANYTIME")}</span>
     </div>
     """,
 )
@@ -847,14 +1217,14 @@ for col, (name, code, desc) in zip(cols, SUBSYSTEMS):
     with col:
         selected = st.session_state.subsystem == name
         if st.button(
-            f"{code} {name.upper()}",
+            f"{code} {TSUB(name).upper()}",
             key=f"sub_{name}",
             type="primary" if selected else "secondary",
             width="stretch",
         ):
             st.session_state.subsystem = name
             st.rerun()
-        st.html(f'<div class="sub-desc">{desc}</div>')
+        st.html(f'<div class="sub-desc">{T(desc)}</div>')
 
 subsystem = st.session_state.subsystem
 
@@ -862,9 +1232,9 @@ subsystem = st.session_state.subsystem
 # Console — upload + prediction flow (placeholder logic)
 # ---------------------------------------------------------------------------
 st.html(
-    """
+    f"""
     <div class="section">
-        <span class="sec-t">02 · UPLOAD DATA</span>
+        <span class="sec-t">{T("02 · UPLOAD DATA")}</span>
         <span class="sec-line"></span>
         <span class="sec-hint">CSV · TXT · XLSX</span>
     </div>
@@ -872,7 +1242,7 @@ st.html(
 )
 
 uploaded_files = st.file_uploader(
-    f"Upload {subsystem} data file(s)",
+    f"Upload {TSUB(subsystem)} data file(s)",
     type=["csv", "txt", "xlsx"],
     accept_multiple_files=subsystem != "ACV",
     label_visibility="collapsed",
@@ -890,10 +1260,10 @@ if st.session_state.get("upload_sig") != upload_sig:
 
 if not uploaded_files:
     st.html(
-        """
+        f"""
         <div class="await">
-            <div class="await-t">AWAITING STREAM</div>
-            <div class="await-s">no files loaded — drop one or more CSV · TXT · XLSX exports above</div>
+            <div class="await-t">{T("AWAITING STREAM")}</div>
+            <div class="await-s">{T("no files loaded — drop one or more CSV · TXT · XLSX exports above")}</div>
         </div>
         """,
     )
@@ -912,8 +1282,8 @@ if uploaded_files:
         n_gaps = int((stream_df["dt_ms"] > dp.GAP_THRESHOLD_MS).sum())
         preview_html = (
             '<div class="helper" style="margin-top:0.35rem">'
-            f'Rows <em>{len(stream_df):,}</em> · span <em>{span_s / 60:.1f} min</em> · '
-            f'sample <em>{rate_hz:.0f} Hz</em> · gaps <em>{n_gaps}</em></div>'
+            f'{T("Rows")} <em>{len(stream_df):,}</em> · {T("span")} <em>{span_s / 60:.1f} min</em> · '
+            f'{T("sample")} <em>{rate_hz:.0f} Hz</em> · {T("gaps")} <em>{n_gaps}</em></div>'
         )
     except Exception:
         stream_df = None
@@ -921,7 +1291,7 @@ if uploaded_files:
         total_kb = sum(f.size for f in uploaded_files) / 1024
         file_list = " &nbsp;·&nbsp; ".join(f.name for f in uploaded_files)
         st.html(
-            f'<div class="file-chip">[BATCH] {len(uploaded_files)} FILES &nbsp;—&nbsp; {total_kb:,.1f} KB TOTAL</div>'
+            f'<div class="file-chip">[BATCH] {len(uploaded_files)} {T("FILES")} &nbsp;—&nbsp; {total_kb:,.1f} KB {T("TOTAL")}</div>'
             f'<div class="helper" style="margin-top:0.35rem">{file_list}</div>'
             f"{preview_html}",
         )
@@ -940,20 +1310,20 @@ if uploaded_files:
         if st.session_state.get(model_key) not in model_names:
             st.session_state.pop(model_key, None)
         model_choice = st.selectbox(
-            "Prediction model",
+            T("Prediction model"),
             model_names,
             index=0,
             key=model_key,
         )
-        submitted = st.form_submit_button("Run prediction", width="stretch")
+        submitted = st.form_submit_button(T("Run prediction"), width="stretch")
 
     if submitted or st.session_state.get("ran"):
         st.session_state["ran"] = True
 
         st.html(
-            """
+            f"""
             <div class="section" id="output">
-                <span class="sec-t">03 · OUTPUT</span>
+                <span class="sec-t">{T("03 · OUTPUT")}</span>
                 <span class="sec-line"></span>
             </div>
             """,
@@ -966,13 +1336,13 @@ if uploaded_files:
                 df = stream_df if stream_df is not None else dp.load_stream(
                     io.BytesIO(uploaded_file.getvalue())
                 )
-                prog = st.progress(0, text="Segmenting the stream...")
+                prog = st.progress(0, text=T("Segmenting the stream..."))
                 segs = dp.segment_stream(df)
-                prog.progress(30, text=f"{len(segs)} cycles found — classifying...")
+                prog.progress(30, text=f"{len(segs)}{T(' cycles found — classifying...')}")
                 preds = dp.run_inference(df, entry["model"], entry["scaler"])
-                prog.progress(75, text="Running Monte Carlo simulation...")
-                mc = dd.run_monte_carlo(preds)
-                prog.progress(100, text="Done")
+                prog.progress(75, text=T("Running Monte Carlo simulation..."))
+                mc = dd.run_monte_carlo(preds, lang=st.session_state.get("lang", "en"))
+                prog.progress(100, text=T("Done"))
                 prog.empty()
             except Exception as exc:
                 preds = None
@@ -980,7 +1350,7 @@ if uploaded_files:
                 door_error = str(exc)
 
             if door_error is not None:
-                st.error(f"Could not analyse this file as a Door data stream — {door_error}")
+                st.error(T("Could not analyse this file as a Door data stream — ") + door_error)
             else:
                 n_abnormal = int((preds["status"] == dp.LABEL_ABNORMAL).sum())
                 n_total = len(preds)
@@ -1005,20 +1375,20 @@ if uploaded_files:
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["activity"]}</div>
                                 <div>
-                                    <div class="fcard-t">Cycle timeline</div>
-                                    <div class="fcard-s">each bar = one cycle · red = abnormal resistance</div>
+                                    <div class="fcard-t">{T("Cycle timeline")}</div>
+                                    <div class="fcard-s">{T("each bar = one cycle · red = abnormal resistance")}</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.timeline_svg(preds, theme=theme), 200)
+                chart_frame(dd.timeline_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 200)
                 st.html(
                     f"""
                             <div class="mini-stats">
-                                <span class="chip">Cycles <b>{n_total}</b></span>
-                                <span class="chip">Abnormal <b>{n_abnormal}</b></span>
-                                <span class="chip">Normal <b>{n_normal}</b></span>
-                                <span class="chip up">Abnormal rate <b>{rate:.0f}%</b></span>
+                                <span class="chip">{T("Cycles")} <b>{n_total}</b></span>
+                                <span class="chip">{T("Abnormal")} <b>{n_abnormal}</b></span>
+                                <span class="chip">{T("Normal")} <b>{n_normal}</b></span>
+                                <span class="chip up">{T("Abnormal rate")} <b>{rate:.0f}%</b></span>
                             </div>
                         </div>
 
@@ -1026,35 +1396,35 @@ if uploaded_files:
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["gauge"]}</div>
                                 <div>
-                                    <div class="fcard-t">Analysis summary</div>
+                                    <div class="fcard-t">{T("Analysis summary")}</div>
                                     <div class="fcard-s">{model_tag}</div>
                                 </div>
                             </div>
-                            <div class="stat-big">{n_total}<span>cycles</span></div>
+                            <div class="stat-big">{n_total}<span>{T("cycles")}</span></div>
                             <div class="sum-rows">
-                                <div class="sum-row"><span>Abnormal</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
-                                <div class="sum-row"><span>Normal</span><b>{n_normal}</b></div>
-                                <div class="sum-row"><span>Mean confidence</span><b>{mean_conf * 100:.0f}%</b></div>
-                                <div class="sum-row"><span>Stream length</span><b>{dur_min:.0f} min</b></div>
+                                <div class="sum-row"><span>{T("Abnormal")}</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
+                                <div class="sum-row"><span>{T("Normal")}</span><b>{n_normal}</b></div>
+                                <div class="sum-row"><span>{T("Mean confidence")}</span><b>{mean_conf * 100:.0f}%</b></div>
+                                <div class="sum-row"><span>{T("Stream length")}</span><b>{dur_min:.0f} min</b></div>
                             </div>
-                            <div class="up-foot"><span class="tgl-dot"></span>{n_abnormal} cycles flagged for inspection</div>
+                            <div class="up-foot"><span class="tgl-dot"></span>{n_abnormal}{T(" cycles flagged for inspection")}</div>
                         </div>
 
                         <div class="fcard fcard-wide">
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["bar"]}</div>
                                 <div>
-                                    <div class="fcard-t">Monte Carlo — fault distribution</div>
-                                    <div class="fcard-s">{mc['n_trials']:,} trials × {mc['horizon']:,} future cycles</div>
+                                    <div class="fcard-t">{T("Monte Carlo — fault distribution")}</div>
+                                    <div class="fcard-s">{mc['n_trials']:,}{T(" trials × ")}{mc['horizon']:,}{T(" future cycles")}</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.mc_hist_svg(mc, theme=theme), 300)
+                chart_frame(dd.mc_hist_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
                 st.html(
                     f"""
                             <div class="mini-stats">
-                                <span class="chip">Mean <b>{mc['mean']:,.1f}</b></span>
+                                <span class="chip">{T("Mean")} <b>{mc['mean']:,.1f}</b></span>
                                 <span class="chip">P95 <b>{mc['p95']:,.1f}</b></span>
                                 <span class="chip">P99 <b>{mc['p99']:,.1f}</b></span>
                             </div>
@@ -1064,35 +1434,35 @@ if uploaded_files:
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["pulse"]}</div>
                                 <div>
-                                    <div class="fcard-t">Cycle risk score</div>
-                                    <div class="fcard-s">model P(abnormal) per cycle · 10 bins</div>
+                                    <div class="fcard-t">{T("Cycle risk score")}</div>
+                                    <div class="fcard-s">{T("model P(abnormal) per cycle · 10 bins")}</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.risk_hist_svg(preds, theme=theme), 260)
+                chart_frame(dd.risk_hist_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 260)
                 st.html(
                     f"""
-                            <div class="up-foot"><span class="tgl-dot"></span>risk re-sampled in the simulation</div>
+                            <div class="up-foot"><span class="tgl-dot"></span>{T("risk re-sampled in the simulation")}</div>
                         </div>
 
                         <div class="fcard fcard-wide">
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["trend"]}</div>
                                 <div>
-                                    <div class="fcard-t">Survival curve</div>
-                                    <div class="fcard-s">Probability of no fault vs cycles ahead</div>
+                                    <div class="fcard-t">{T("Survival curve")}</div>
+                                    <div class="fcard-s">{T("Probability of no fault vs cycles ahead")}</div>
                                 </div>
                             </div>
                     """,
                 )
-                chart_frame(dd.survival_svg(mc, theme=theme), 300)
+                chart_frame(dd.survival_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
                 st.html(
                     f"""
                             <div class="mini-stats">
-                                <span class="chip">Median cycles to fault <b>{mc['median_cycles_disp']}</b></span>
-                                <span class="chip">Median time <b>{mc['median_hours']}</b></span>
-                                <span class="chip up">P(≥1 in 100) <b>{mc['p_ge1_100'] * 100:.0f}%</b></span>
+                                <span class="chip">{T("Median cycles to fault")} <b>{mc['median_cycles_disp']}</b></span>
+                                <span class="chip">{T("Median time")} <b>{mc['median_hours']}</b></span>
+                                <span class="chip up">{T("P(≥1 in 100)")} <b>{mc['p_ge1_100'] * 100:.0f}%</b></span>
                             </div>
                         </div>
 
@@ -1100,19 +1470,19 @@ if uploaded_files:
                             <div class="fcard-h">
                                 <div class="fcard-ic">{ICONS["clock"]}</div>
                                 <div>
-                                    <div class="fcard-t">Forecast summary</div>
-                                    <div class="fcard-s">from the Monte Carlo run</div>
+                                    <div class="fcard-t">{T("Forecast summary")}</div>
+                                    <div class="fcard-s">{T("from the Monte Carlo run")}</div>
                                 </div>
                             </div>
                             <div class="sum-rows" style="margin-top:0.4rem">
-                                <div class="sum-row"><span>Expected faults / 1,000</span><b>{mc['mean']:,.1f}</b></div>
-                                <div class="sum-row"><span>P50 faults</span><b>{mc['p50']:,.1f}</b></div>
-                                <div class="sum-row"><span>P95 faults</span><b>{mc['p95']:,.1f}</b></div>
-                                <div class="sum-row"><span>P99 faults</span><b>{mc['p99']:,.1f}</b></div>
-                                <div class="sum-row"><span>P(≥1 in 100 cycles)</span><b>{mc['p_ge1_100'] * 100:.0f}%</b></div>
-                                <div class="sum-row"><span>Median time to fault</span><b>{mc['median_hours']}</b></div>
+                                <div class="sum-row"><span>{T("Expected faults / 1,000")}</span><b>{mc['mean']:,.1f}</b></div>
+                                <div class="sum-row"><span>{T("P50 faults")}</span><b>{mc['p50']:,.1f}</b></div>
+                                <div class="sum-row"><span>{T("P95 faults")}</span><b>{mc['p95']:,.1f}</b></div>
+                                <div class="sum-row"><span>{T("P99 faults")}</span><b>{mc['p99']:,.1f}</b></div>
+                                <div class="sum-row"><span>{T("P(≥1 in 100 cycles)")}</span><b>{mc['p_ge1_100'] * 100:.0f}%</b></div>
+                                <div class="sum-row"><span>{T("Median time to fault")}</span><b>{mc['median_hours']}</b></div>
                             </div>
-                            <div class="up-foot"><span class="chip">1,000 future cycles</span></div>
+                            <div class="up-foot"><span class="chip">{T("1,000 future cycles")}</span></div>
                         </div>
 
                     </div>
@@ -1120,24 +1490,27 @@ if uploaded_files:
                 )
 
                 st.html(
-                    """
+                    f"""
                     <div class="section">
-                        <span class="sec-t">PREDICTIONS TABLE</span>
+                        <span class="sec-t">{T("PREDICTIONS TABLE")}</span>
                         <span class="sec-line"></span>
                     </div>
                     """,
                 )
                 disp = preds.copy()
-                disp["flag"] = np.where(
-                    disp["status"] == dp.LABEL_ABNORMAL, "● abnormal", "—"
+                disp["status"] = disp["status"].map(
+                    {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
                 )
-                show_ab = st.toggle("Abnormal only", key="door_filter")
-                view = disp[disp["status"] == dp.LABEL_ABNORMAL] if show_ab else disp
+                disp["flag"] = np.where(
+                    disp["status"] == T("Abnormal resistance"), T("● abnormal"), "—"
+                )
+                show_ab = st.toggle(T("Abnormal only"), key="door_filter")
+                view = disp[disp["status"] == T("Abnormal resistance")] if show_ab else disp
 
                 def _flag_rows(row):
                     bg = (
                         "background-color: rgba(255, 45, 85, 0.06);"
-                        if row["status"] == dp.LABEL_ABNORMAL
+                        if row["flag"] != "—"
                         else ""
                     )
                     return [bg] * len(row)
@@ -1148,15 +1521,15 @@ if uploaded_files:
                     hide_index=True,
                     height=min(340, 44 + 35 * len(view)),
                     column_config={
-                        "segment_id": st.column_config.TextColumn("Segment"),
-                        "start_time": st.column_config.TextColumn("Start"),
-                        "end_time": st.column_config.TextColumn("End"),
-                        "operation": st.column_config.TextColumn("Operation"),
-                        "status": st.column_config.TextColumn("Status"),
-                        "flag": st.column_config.TextColumn("Flag"),
-                        "n_rows": st.column_config.NumberColumn("Rows"),
+                        "segment_id": st.column_config.TextColumn(T("Segment")),
+                        "start_time": st.column_config.TextColumn(T("Start")),
+                        "end_time": st.column_config.TextColumn(T("End")),
+                        "operation": st.column_config.TextColumn(T("Operation")),
+                        "status": st.column_config.TextColumn(T("Status")),
+                        "flag": st.column_config.TextColumn(T("Flag")),
+                        "n_rows": st.column_config.NumberColumn(T("Rows")),
                         "confidence": st.column_config.ProgressColumn(
-                            "Confidence",
+                            T("Confidence"),
                             min_value=0.0,
                             max_value=1.0,
                             format="%.0f%%",
@@ -1165,20 +1538,24 @@ if uploaded_files:
                 )
 
                 st.html(
-                    """
+                    f"""
                     <div class="section">
-                        <span class="sec-t">INSPECT A CYCLE</span>
+                        <span class="sec-t">{T("INSPECT A CYCLE")}</span>
                         <span class="sec-line"></span>
-                        <span class="sec-hint">CURRENT &amp; POSITION VS STROKE</span>
+                        <span class="sec-hint">{T("CURRENT &amp; POSITION VS STROKE")}</span>
                     </div>
                     """,
                 )
+                status_zh = (
+                    preds["status"]
+                    .map({dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")})
+                )
                 insp_options = [
-                    f"{r.segment_id} · {r.operation} · {r.status} · conf {r.confidence * 100:.0f}%"
-                    for r in preds.itertuples()
+                    f"{r.segment_id} · {r.operation} · {status_zh[i]} · {T('conf')} {r.confidence * 100:.0f}%"
+                    for i, r in enumerate(preds.itertuples())
                 ]
                 insp_idx = st.selectbox(
-                    "Cycle",
+                    T("Cycle"),
                     range(len(insp_options)),
                     format_func=lambda i: insp_options[i],
                     key="door_inspect",
@@ -1187,10 +1564,10 @@ if uploaded_files:
                 seg_mask = (df["t"] >= dp.parse_time(sel["start_time"])) & (
                     df["t"] <= dp.parse_time(sel["end_time"])
                 )
-                chart_frame(dd.cycle_detail_svg(df[seg_mask], sel, theme=theme), 320)
+                chart_frame(dd.cycle_detail_svg(df[seg_mask], sel, theme=theme, lang=st.session_state.get("lang", "en")), 320)
 
                 st.download_button(
-                    label="Download predictions",
+                    label=T("Download predictions"),
                     data=preds[
                         ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
                     ].to_csv(index=False).encode("utf-8"),
@@ -1216,7 +1593,9 @@ if uploaded_files:
                 shm_error = str(exc)
 
             if shm_error is not None:
-                st.error(f"Could not analyse this file as an SHM stress stream — {shm_error}")
+                st.error(
+                    T("Could not analyse this file as an ") + TSUB("SHM") + T(" stress stream — ") + shm_error
+                )
             else:
                 tag = (
                     f"{model_choice} · CV 1−MAPE {shm_score:.3f}"
@@ -1226,29 +1605,29 @@ if uploaded_files:
                 st.html(
                     f"""
                     <div class="result-banner">
-                        <span>Cumulative fatigue damage estimate — <b>{damage:.4f}</b>
-                        · higher values mean closer to the fatigue limit.</span>
+                        <span>{T("Cumulative fatigue damage estimate — ")}<b>{damage:.4f}</b>
+                        {T(" · higher values mean closer to the fatigue limit.")}</span>
                     </div>
                     <div class="fcard">
                         <div class="fcard-h">
                             <div class="fcard-ic">{ICONS["gauge"]}</div>
                             <div>
-                                <div class="fcard-t">Fatigue damage</div>
+                                <div class="fcard-t">{T("Fatigue damage")}</div>
                                 <div class="fcard-s">{tag}</div>
                             </div>
                         </div>
-                        <div class="stat-big">{damage:.4f}<span>cumulative damage</span></div>
+                        <div class="stat-big">{damage:.4f}<span>{T("cumulative damage")}</span></div>
                         <div class="sum-rows">
-                            <div class="sum-row"><span>Fatigue failure threshold</span><b>1.0000</b></div>
-                            <div class="sum-row"><span>Remaining margin</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
-                            <div class="sum-row"><span>Samples analysed</span><b>{len(x):,}</b></div>
+                            <div class="sum-row"><span>{T("Fatigue failure threshold")}</span><b>1.0000</b></div>
+                            <div class="sum-row"><span>{T("Remaining margin")}</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
+                            <div class="sum-row"><span>{T("Samples analysed")}</span><b>{len(x):,}</b></div>
                         </div>
                     </div>
                     """,
                 )
                 chart_frame(shm_signal_svg(x, theme=theme), 240)
                 st.download_button(
-                    label="Download prediction",
+                    label=T("Download prediction"),
                     data=pd.DataFrame(
                         {"file_id": [uploaded_file.name], "prediction": [round(damage, 6)]}
                     ).to_csv(index=False).encode("utf-8"),
@@ -1277,40 +1656,43 @@ if uploaded_files:
                 rail_error = str(exc)
 
             if rail_error is not None:
-                st.error(f"Could not analyse this file as a Rail Corrugation recording — {rail_error}")
+                st.error(T("Could not analyse this file as a Rail Corrugation recording — ") + rail_error)
             else:
                 tag = (
                     f"{model_choice} · CV macro F1 {rail_score:.3f}"
                     if rail_score is not None
                     else model_choice
                 )
+                label_disp = T(label)
                 flag = label != "Normal"
                 st.html(
                     f"""
                     <div class="result-banner">
-                        <span>Classification — <b>{label.upper()}</b>
-                        · confidence {conf * 100:.0f}%</span>
+                        <span>{T("Classification — ")}<b>{label_disp.upper()}</b>
+                        {T(" · confidence ")}{conf * 100:.0f}%</span>
                     </div>
                     <div class="fcard">
                         <div class="fcard-h">
                             <div class="fcard-ic">{ICONS["pulse"]}</div>
                             <div>
-                                <div class="fcard-t">Corrugation verdict</div>
+                                <div class="fcard-t">{T("Corrugation verdict")}</div>
                                 <div class="fcard-s">{tag}</div>
                             </div>
                         </div>
-                        <div class="stat-big">{label}<span></span></div>
+                        <div class="stat-big">{label_disp}<span></span></div>
                         <div class="sum-rows">
-                            <div class="sum-row"><span>Confidence</span><b>{conf * 100:.0f}%</b></div>
-                            <div class="sum-row"><span>Duration</span><b>1.0 s · 10 kHz</b></div>
+                            <div class="sum-row"><span>{T("Confidence")}</span><b>{conf * 100:.0f}%</b></div>
+                            <div class="sum-row"><span>{T("Duration")}</span><b>1.0 s · 10 kHz</b></div>
                         </div>
                     </div>
                     """,
                 )
-                bar_rows = [(lab, float(p), lab == label) for lab, p in zip(rp.LABELS, proba)]
+                bar_rows = [
+                    (T(lab), float(p), lab == label) for lab, p in zip(rp.LABELS, proba)
+                ]
                 chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * 3)
                 st.download_button(
-                    label="Download prediction",
+                    label=T("Download prediction"),
                     data=pd.DataFrame(
                         {"file_id": [uploaded_file.name], "prediction": [label]}
                     ).to_csv(index=False).encode("utf-8"),
@@ -1338,7 +1720,9 @@ if uploaded_files:
                 acv_error = str(exc)
 
             if acv_error is not None:
-                st.error(f"Could not analyse this file as an ACV case — {acv_error}")
+                st.error(
+                    T("Could not analyse this file as an ") + TSUB("ACV") + T(" case — ") + acv_error
+                )
             else:
                 tag = (
                     f"{model_choice} · LOO rank-decay {acv_score:.3f}"
@@ -1348,32 +1732,36 @@ if uploaded_files:
                 order = np.argsort(-proba)
                 ranked_list = list(ranked)
                 proba_list = [float(proba[i]) for i in order]
+                car_disp = lambda c: f"{T('Car ')}{c}"
                 st.html(
                     f"""
                     <div class="result-banner">
-                        <span>Most likely faulty car — <b>CAR {ranked_list[0]}</b>
-                        · probability {proba_list[0] * 100:.0f}%</span>
+                        <span>{T("Most likely faulty car — ")}<b>CAR {ranked_list[0]}</b>
+                        {T(" · probability ")}{proba_list[0] * 100:.0f}%</span>
                     </div>
                     <div class="fcard">
                         <div class="fcard-h">
                             <div class="fcard-ic">{ICONS["bar"]}</div>
                             <div>
-                                <div class="fcard-t">Car leak-probability ranking</div>
+                                <div class="fcard-t">{T("Car leak-probability ranking")}</div>
                                 <div class="fcard-s">{tag}</div>
                             </div>
                         </div>
                         <div class="sum-rows">
-                            <div class="sum-row"><span>Top pick</span><b>Car {ranked_list[0]}</b></div>
-                            <div class="sum-row"><span>Runner-up</span><b>Car {ranked_list[1]}</b></div>
-                            <div class="sum-row"><span>Cars ranked</span><b>{len(ranked_list)}</b></div>
+                            <div class="sum-row"><span>{T("Top pick")}</span><b>{car_disp(ranked_list[0])}</b></div>
+                            <div class="sum-row"><span>{T("Runner-up")}</span><b>{car_disp(ranked_list[1])}</b></div>
+                            <div class="sum-row"><span>{T("Cars ranked")}</span><b>{len(ranked_list)}</b></div>
                         </div>
                     </div>
                     """,
                 )
-                rows = [(f"Car {c}", p, i == 0) for i, (c, p) in enumerate(zip(ranked_list, proba_list))]
+                rows = [
+                    (car_disp(c), p, i == 0)
+                    for i, (c, p) in enumerate(zip(ranked_list, proba_list))
+                ]
                 chart_frame(bars_svg(rows, theme=theme), 30 + 40 * len(rows))
                 st.download_button(
-                    label="Download ranking",
+                    label=T("Download ranking"),
                     data=pd.DataFrame(
                         {"file_id": [uploaded_file.name], "ranked_cars": ["|".join(ranked_list)]}
                     ).to_csv(index=False).encode("utf-8"),
@@ -1383,9 +1771,9 @@ if uploaded_files:
                 )
         else:
             st.html(
-                """
+                f"""
                 <div class="result-banner">
-                    <span>This subsystem is not wired to a model yet.</span>
+                    <span>{T("This subsystem is not wired to a model yet.")}</span>
                 </div>
                 """,
             )
