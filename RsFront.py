@@ -380,7 +380,7 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
                 label=T("Download batch predictions"),
-                data=table.to_csv(index=False).encode("utf-8"),
+                data=table.to_csv(index=False).encode("utf-8-sig"),
                 file_name="door_predictions.csv",
                 mime="text/csv",
                 width="stretch",
@@ -420,7 +420,7 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
                 label=T("Download batch predictions"),
-                data=table.to_csv(index=False).encode("utf-8"),
+                data=table.to_csv(index=False).encode("utf-8-sig"),
                 file_name="shm_predictions.csv",
                 mime="text/csv",
                 width="stretch",
@@ -472,7 +472,7 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
                 label=T("Download batch predictions"),
-                data=table.to_csv(index=False).encode("utf-8"),
+                data=table.to_csv(index=False).encode("utf-8-sig"),
                 file_name="rail_predictions.csv",
                 mime="text/csv",
                 width="stretch",
@@ -531,7 +531,7 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             st.dataframe(table, width="stretch", hide_index=True)
             st.download_button(
                 label=T("Download batch rankings"),
-                data=table.to_csv(index=False).encode("utf-8"),
+                data=table.to_csv(index=False).encode("utf-8-sig"),
                 file_name="acv_predictions.csv",
                 mime="text/csv",
                 width="stretch",
@@ -1574,7 +1574,7 @@ if uploaded_files:
                             "segment_id", "start_time", "end_time", "operation", "status", "n_rows"
                         )})
                         .to_csv(index=False)
-                        .encode("utf-8")
+                        .encode("utf-8-sig")
                     ),
                     file_name="door_predictions.csv",
                     mime="text/csv",
@@ -1635,7 +1635,7 @@ if uploaded_files:
                     label=T("Download prediction"),
                     data=pd.DataFrame(
                         {T("file_id"): [uploaded_file.name], T("prediction"): [round(damage, 6)]}
-                    ).to_csv(index=False).encode("utf-8"),
+                    ).to_csv(index=False).encode("utf-8-sig"),
                     file_name="shm_predictions.csv",
                     mime="text/csv",
                     width="stretch",
@@ -1700,7 +1700,7 @@ if uploaded_files:
                     label=T("Download prediction"),
                     data=pd.DataFrame(
                         {T("file_id"): [uploaded_file.name], T("prediction"): [T(label)]}
-                    ).to_csv(index=False).encode("utf-8"),
+                    ).to_csv(index=False).encode("utf-8-sig"),
                     file_name="rail_predictions.csv",
                     mime="text/csv",
                     width="stretch",
@@ -1769,7 +1769,7 @@ if uploaded_files:
                     label=T("Download ranking"),
                     data=pd.DataFrame(
                         {T("file_id"): [uploaded_file.name], T("ranked_cars"): ["|".join(ranked_list)]}
-                    ).to_csv(index=False).encode("utf-8"),
+                    ).to_csv(index=False).encode("utf-8-sig"),
                     file_name="acv_predictions.csv",
                     mime="text/csv",
                     width="stretch",
