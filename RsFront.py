@@ -99,6 +99,7 @@ ZH = {
     "sample": "采样",
     "gaps": "间隔",
     "FILES": "文件",
+    "FILE": "文件",
     "TOTAL": "总计",
     "Cycles": "循环",
     "Abnormal": "异常",
@@ -326,16 +327,485 @@ def bars_svg(rows, theme="dark", value_fmt="{:.0f}%"):
     return svg
 
 # ---------------------------------------------------------------------------
-# Batch (multi-file) results
+# Per-file detailed output (used for single and multiple uploads)
+# ---------------------------------------------------------------------------
+def render_output(subsystem, uploaded_file, model_choice, theme, submitted, suffix):
+    if not (submitted or st.session_state.get("ran")):
+        return
+    st.session_state["ran"] = True
+
+    if subsystem == "Door":
+        door_error = None
+        try:
+            entry = load_bundle(SUBSYSTEM_BUNDLES["Door"])["models"][model_choice]
+            df = dp.load_stream(io.BytesIO(uploaded_file.getvalue()))
+            prog = st.progress(0, text=T("Segmenting the stream..."))
+            segs = dp.segment_stream(df)
+            prog.progress(30, text=f"{len(segs)}{T(' cycles found — classifying...')}")
+            preds = dp.run_inference(df, entry["model"], entry["scaler"])
+            prog.progress(75, text=T("Running Monte Carlo simulation..."))
+            mc = dd.run_monte_carlo(preds, lang=st.session_state.get("lang", "en"))
+            prog.progress(100, text=T("Done"))
+            prog.empty()
+        except Exception as exc:
+            preds = None
+            mc = None
+            door_error = str(exc)
+
+        if door_error is not None:
+            st.error(T("Could not analyse this file as a Door data stream — ") + door_error)
+        else:
+            n_abnormal = int((preds["status"] == dp.LABEL_ABNORMAL).sum())
+            n_total = len(preds)
+            n_normal = n_total - n_abnormal
+            mean_conf = float(preds["confidence"].mean())
+            rate = n_abnormal / n_total * 100 if n_total else 0.0
+            t_start = dp.parse_time(preds["start_time"].iloc[0])
+            t_end = dp.parse_time(preds["end_time"].iloc[-1])
+            dur_min = (t_end - t_start).total_seconds() / 60
+            model_score = load_bundle(SUBSYSTEM_BUNDLES["Door"])["scores"].get(model_choice, None)
+            model_tag = (
+                f"{model_choice} · holdout IoU-F1 {model_score:.3f}"
+                if model_score is not None
+                else model_choice
+            )
+
+            st.html(
+                f"""
+                <div class="bento">
+
+                    <div class="fcard fcard-wide">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["activity"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Cycle timeline")}</div>
+                                <div class="fcard-s">{T("each bar = one cycle · red = abnormal resistance")}</div>
+                            </div>
+                        </div>
+                """,
+            )
+            chart_frame(dd.timeline_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 200)
+            st.html(
+                f"""
+                        <div class="mini-stats">
+                            <span class="chip">{T("Cycles")} <b>{n_total}</b></span>
+                            <span class="chip">{T("Abnormal")} <b>{n_abnormal}</b></span>
+                            <span class="chip">{T("Normal")} <b>{n_normal}</b></span>
+                            <span class="chip up">{T("Abnormal rate")} <b>{rate:.0f}%</b></span>
+                        </div>
+                    </div>
+
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["gauge"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Analysis summary")}</div>
+                                <div class="fcard-s">{model_tag}</div>
+                            </div>
+                        </div>
+                        <div class="stat-big"><b class="count" data-val="{n_total}" data-dec="0">0</b><span>{T("cycles")}</span></div>
+                        <div class="sum-rows">
+                            <div class="sum-row"><span>{T("Abnormal")}</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
+                            <div class="sum-row"><span>{T("Normal")}</span><b>{n_normal}</b></div>
+                            <div class="sum-row"><span>{T("Mean confidence")}</span><b>{mean_conf * 100:.0f}%</b></div>
+                            <div class="sum-row"><span>{T("Stream length")}</span><b>{dur_min:.0f} min</b></div>
+                        </div>
+                        <div class="up-foot"><span class="tgl-dot"></span>{n_abnormal}{T(" cycles flagged for inspection")}</div>
+                    </div>
+
+                    <div class="fcard fcard-wide">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["bar"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Monte Carlo — fault distribution")}</div>
+                                <div class="fcard-s">{mc['n_trials']:,}{T(" trials × ")}{mc['horizon']:,}{T(" future cycles")}</div>
+                            </div>
+                        </div>
+                """,
+            )
+            chart_frame(dd.mc_hist_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
+            st.html(
+                f"""
+                        <div class="mini-stats">
+                            <span class="chip">{T("Mean")} <b>{mc['mean']:,.1f}</b></span>
+                            <span class="chip">P95 <b>{mc['p95']:,.1f}</b></span>
+                            <span class="chip">P99 <b>{mc['p99']:,.1f}</b></span>
+                        </div>
+                    </div>
+
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["pulse"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Cycle risk score")}</div>
+                                <div class="fcard-s">{T("model P(abnormal) per cycle · 10 bins")}</div>
+                            </div>
+                        </div>
+                """,
+            )
+            chart_frame(dd.risk_hist_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 260)
+            st.html(
+                f"""
+                        <div class="up-foot"><span class="tgl-dot"></span>{T("risk re-sampled in the simulation")}</div>
+                    </div>
+
+                    <div class="fcard fcard-wide">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["trend"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Survival curve")}</div>
+                                <div class="fcard-s">{T("Probability of no fault vs cycles ahead")}</div>
+                            </div>
+                        </div>
+                """,
+            )
+            chart_frame(dd.survival_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
+            st.html(
+                f"""
+                        <div class="mini-stats">
+                            <span class="chip">{T("Median cycles to fault")} <b>{mc['median_cycles_disp']}</b></span>
+                            <span class="chip">{T("Median time")} <b>{mc['median_hours']}</b></span>
+                            <span class="chip up">{T("P(≥1 in 100)")} <b>{mc['p_ge1_100'] * 100:.0f}%</b></span>
+                        </div>
+                    </div>
+
+                    <div class="fcard">
+                        <div class="fcard-h">
+                            <div class="fcard-ic">{ICONS["clock"]}</div>
+                            <div>
+                                <div class="fcard-t">{T("Forecast summary")}</div>
+                                <div class="fcard-s">{T("from the Monte Carlo run")}</div>
+                            </div>
+                        </div>
+                        <div class="sum-rows" style="margin-top:0.4rem">
+                            <div class="sum-row"><span>{T("Expected faults / 1,000")}</span><b>{mc['mean']:,.1f}</b></div>
+                            <div class="sum-row"><span>{T("P50 faults")}</span><b>{mc['p50']:,.1f}</b></div>
+                            <div class="sum-row"><span>{T("P95 faults")}</span><b>{mc['p95']:,.1f}</b></div>
+                            <div class="sum-row"><span>{T("P99 faults")}</span><b>{mc['p99']:,.1f}</b></div>
+                            <div class="sum-row"><span>{T("P(≥1 in 100 cycles)")}</span><b>{mc['p_ge1_100'] * 100:.0f}%</b></div>
+                            <div class="sum-row"><span>{T("Median time to fault")}</span><b>{mc['median_hours']}</b></div>
+                        </div>
+                        <div class="up-foot"><span class="chip">{T("1,000 future cycles")}</span></div>
+                    </div>
+
+                </div>
+                """,
+            )
+
+            st.html(
+                f"""
+                <div class="section">
+                    <span class="sec-t">{T("PREDICTIONS TABLE")}</span>
+                    <span class="sec-line"></span>
+                </div>
+                """,
+            )
+            disp = preds.copy()
+            disp["status"] = disp["status"].map(
+                {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
+            )
+            disp["flag"] = np.where(
+                disp["status"] == T("Abnormal resistance"), T("● abnormal"), "—"
+            )
+            show_ab = st.toggle(T("Abnormal only"), key=f"door_filter_{suffix}")
+            view = disp[disp["status"] == T("Abnormal resistance")] if show_ab else disp
+
+            def _flag_rows(row):
+                bg = (
+                    "background-color: rgba(255, 45, 85, 0.06);"
+                    if row["flag"] != "—"
+                    else ""
+                )
+                return [bg] * len(row)
+
+            st.dataframe(
+                view.style.apply(_flag_rows, axis=1),
+                width="stretch",
+                hide_index=True,
+                height=min(340, 44 + 35 * len(view)),
+                key=f"df_door_{suffix}",
+                column_config={
+                    "segment_id": st.column_config.TextColumn(T("Segment")),
+                    "start_time": st.column_config.TextColumn(T("Start")),
+                    "end_time": st.column_config.TextColumn(T("End")),
+                    "operation": st.column_config.TextColumn(T("Operation")),
+                    "status": st.column_config.TextColumn(T("Status")),
+                    "flag": st.column_config.TextColumn(T("Flag")),
+                    "n_rows": st.column_config.NumberColumn(T("Rows")),
+                    "confidence": st.column_config.ProgressColumn(
+                        T("Confidence"),
+                        min_value=0.0,
+                        max_value=1.0,
+                        format="%.0f%%",
+                    ),
+                },
+            )
+
+            st.html(
+                f"""
+                <div class="section">
+                    <span class="sec-t">{T("INSPECT A CYCLE")}</span>
+                    <span class="sec-line"></span>
+                    <span class="sec-hint">{T("CURRENT &amp; POSITION VS STROKE")}</span>
+                </div>
+                """,
+            )
+            status_zh = (
+                preds["status"]
+                .map({dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")})
+            )
+            insp_options = [
+                f"{r.segment_id} · {r.operation} · {status_zh[i]} · {T('conf')} {r.confidence * 100:.0f}%"
+                for i, r in enumerate(preds.itertuples())
+            ]
+            insp_idx = st.selectbox(
+                T("Cycle"),
+                range(len(insp_options)),
+                format_func=lambda i: insp_options[i],
+                key=f"door_inspect_{suffix}",
+            )
+            sel = preds.iloc[insp_idx]
+            seg_mask = (df["t"] >= dp.parse_time(sel["start_time"])) & (
+                df["t"] <= dp.parse_time(sel["end_time"])
+            )
+            chart_frame(dd.cycle_detail_svg(df[seg_mask], sel, theme=theme, lang=st.session_state.get("lang", "en")), 320)
+
+            st.download_button(
+                label=T("Download predictions"),
+                data=(
+                    preds[
+                        ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
+                    ]
+                    .assign(status=lambda d: d["status"].map(
+                        {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
+                    ))
+                    .rename(columns={k: T(k) for k in (
+                        "segment_id", "start_time", "end_time", "operation", "status", "n_rows"
+                    )})
+                    .to_csv(index=False)
+                    .encode("utf-8-sig")
+                ),
+                file_name="door_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+                key=f"dl_door_{suffix}",
+            )
+    elif subsystem == "SHM":
+        shm_error = None
+        try:
+            entry = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["models"][model_choice]
+            df_in = pd.read_csv(io.BytesIO(uploaded_file.getvalue()))
+            x = df_in.iloc[:, 0].to_numpy(dtype=float)
+            feats = pd.DataFrame([sp.extract_features(x)], columns=sp.FEATURE_NAMES)
+            Xs = entry["scaler"].transform(feats)
+            pred = float(entry["model"].predict(Xs)[0])
+            if entry.get("log_target", True):
+                pred = float(np.expm1(pred))
+            damage = max(pred, 0.0)
+            shm_score = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["scores"].get(model_choice, None)
+        except Exception as exc:
+            damage = None
+            shm_error = str(exc)
+
+        if shm_error is not None:
+            st.error(
+                T("Could not analyse this file as an ") + TSUB("SHM") + T(" stress stream — ") + shm_error
+            )
+        else:
+            tag = (
+                f"{model_choice} · CV 1−MAPE {shm_score:.3f}"
+                if shm_score is not None
+                else model_choice
+            )
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span>{T("Cumulative fatigue damage estimate — ")}<b>{damage:.4f}</b>
+                    {T(" · higher values mean closer to the fatigue limit.")}</span>
+                </div>
+                <div class="fcard">
+                    <div class="fcard-h">
+                        <div class="fcard-ic">{ICONS["gauge"]}</div>
+                        <div>
+                            <div class="fcard-t">{T("Fatigue damage")}</div>
+                            <div class="fcard-s">{tag}</div>
+                        </div>
+                    </div>
+                    <div class="stat-big"><b class="count" data-val="{damage:.4f}" data-dec="4">0.0000</b><span>{T("cumulative damage")}</span></div>
+                    <div class="sum-rows">
+                        <div class="sum-row"><span>{T("Fatigue failure threshold")}</span><b>1.0000</b></div>
+                        <div class="sum-row"><span>{T("Remaining margin")}</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
+                        <div class="sum-row"><span>{T("Samples analysed")}</span><b>{len(x):,}</b></div>
+                    </div>
+                </div>
+                """,
+            )
+            chart_frame(shm_signal_svg(x, theme=theme), 240)
+            st.download_button(
+                label=T("Download prediction"),
+                data=pd.DataFrame(
+                    {T("file_id"): [uploaded_file.name], T("prediction"): [round(damage, 6)]}
+                ).to_csv(index=False).encode("utf-8-sig"),
+                file_name="shm_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+                key=f"dl_shm_{suffix}",
+            )
+
+    elif subsystem == "Rail Corrugation":
+        rail_error = None
+        try:
+            entry = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["models"][model_choice]
+            df_r = rp.load_rail_file(io.BytesIO(uploaded_file.getvalue()))
+            feats = rp.extract_features(df_r)
+            Xs = entry["scaler"].transform(
+                pd.DataFrame([feats], columns=rp.FEATURE_NAMES)
+            )
+            label = rp.LABELS[int(entry["model"].predict(Xs)[0])]
+            proba = entry["model"].predict_proba(Xs)[0]
+            conf = float(proba.max())
+            rail_score = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["scores"].get(
+                model_choice, None
+            )
+        except Exception as exc:
+            label = None
+            rail_error = str(exc)
+
+        if rail_error is not None:
+            st.error(T("Could not analyse this file as a Rail Corrugation recording — ") + rail_error)
+        else:
+            tag = (
+                f"{model_choice} · CV macro F1 {rail_score:.3f}"
+                if rail_score is not None
+                else model_choice
+            )
+            label_disp = T(label)
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span>{T("Classification — ")}<b>{label_disp.upper()}</b>
+                    {T(" · confidence ")}{conf * 100:.0f}%</span>
+                </div>
+                <div class="fcard">
+                    <div class="fcard-h">
+                        <div class="fcard-ic">{ICONS["pulse"]}</div>
+                        <div>
+                            <div class="fcard-t">{T("Corrugation verdict")}</div>
+                            <div class="fcard-s">{tag}</div>
+                        </div>
+                    </div>
+                    <div class="stat-big">{label_disp}<span></span></div>
+                    <div class="sum-rows">
+                        <div class="sum-row"><span>{T("Confidence")}</span><b>{conf * 100:.0f}%</b></div>
+                        <div class="sum-row"><span>{T("Duration")}</span><b>1.0 s · 10 kHz</b></div>
+                    </div>
+                </div>
+                """,
+            )
+            bar_rows = [
+                (T(lab), float(p), lab == label) for lab, p in zip(rp.LABELS, proba)
+            ]
+            chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * 3)
+            st.download_button(
+                label=T("Download prediction"),
+                data=pd.DataFrame(
+                    {T("file_id"): [uploaded_file.name], T("prediction"): [T(label)]}
+                ).to_csv(index=False).encode("utf-8-sig"),
+                file_name="rail_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+                key=f"dl_rail_{suffix}",
+            )
+
+    elif subsystem == "ACV":
+        acv_error = None
+        ranked = None
+        proba = None
+        try:
+            entry = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["models"][model_choice]
+            tmp_path = os.path.join(tempfile.gettempdir(), f"acv_upload_{uploaded_file.name}")
+            with open(tmp_path, "wb") as f:
+                f.write(uploaded_file.getvalue())
+            try:
+                ranked, proba = acvp.run_inference(tmp_path, entry["model"], entry["scaler"])
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            acv_score = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["scores"].get(model_choice, None)
+        except Exception as exc:
+            acv_error = str(exc)
+
+        if acv_error is not None:
+            st.error(
+                T("Could not analyse this file as an ") + TSUB("ACV") + T(" case — ") + acv_error
+            )
+        else:
+            tag = (
+                f"{model_choice} · LOO rank-decay {acv_score:.3f}"
+                if acv_score is not None
+                else model_choice
+            )
+            order = np.argsort(-proba)
+            ranked_list = list(ranked)
+            proba_list = [float(proba[i]) for i in order]
+            car_disp = lambda c: f"{T('Car ')}{c}"
+            st.html(
+                f"""
+                <div class="result-banner">
+                    <span>{T("Most likely faulty car — ")}<b>CAR {ranked_list[0]}</b>
+                    {T(" · probability ")}{proba_list[0] * 100:.0f}%</span>
+                </div>
+                <div class="fcard">
+                    <div class="fcard-h">
+                        <div class="fcard-ic">{ICONS["bar"]}</div>
+                        <div>
+                            <div class="fcard-t">{T("Car leak-probability ranking")}</div>
+                            <div class="fcard-s">{tag}</div>
+                        </div>
+                    </div>
+                    <div class="sum-rows">
+                        <div class="sum-row"><span>{T("Top pick")}</span><b>{car_disp(ranked_list[0])}</b></div>
+                        <div class="sum-row"><span>{T("Runner-up")}</span><b>{car_disp(ranked_list[1])}</b></div>
+                        <div class="sum-row"><span>{T("Cars ranked")}</span><b>{len(ranked_list)}</b></div>
+                    </div>
+                </div>
+                """,
+            )
+            rows = [
+                (car_disp(c), p, i == 0)
+                for i, (c, p) in enumerate(zip(ranked_list, proba_list))
+            ]
+            chart_frame(bars_svg(rows, theme=theme), 30 + 40 * len(rows))
+            st.download_button(
+                label=T("Download ranking"),
+                data=pd.DataFrame(
+                    {T("file_id"): [uploaded_file.name], T("ranked_cars"): ["|".join(ranked_list)]}
+                ).to_csv(index=False).encode("utf-8-sig"),
+                file_name="acv_predictions.csv",
+                mime="text/csv",
+                width="stretch",
+                key=f"dl_acv_{suffix}",
+            )
+    else:
+        st.html(
+            f"""
+            <div class="result-banner">
+                <span>{T("This subsystem is not wired to a model yet.")}</span>
+            </div>
+            """,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Batch (multi-file) aggregated summary + combined download
 # ---------------------------------------------------------------------------
 def render_batch_section(subsystem, files, model_choice, theme, submitted):
-    if not (submitted or st.session_state.get("ran_batch")):
+    if not (submitted or st.session_state.get("ran")):
         return
-    st.session_state["ran_batch"] = True
 
     st.html(
         f"""
-        <div class="section">
+        <div class="section" style="margin-top:2.4rem">
             <span class="sec-t">{T("03 · BATCH OUTPUT")}</span>
             <span class="sec-line"></span>
             <span class="sec-hint">{T("ALL FILES · AGGREGATED")}</span>
@@ -377,13 +847,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
                 """,
             )
             table = table.rename(columns={k: T(k) for k in table.columns})
-            st.dataframe(table, width="stretch", hide_index=True)
+            st.dataframe(table, width="stretch", hide_index=True, key="df_batch_door")
             st.download_button(
                 label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8-sig"),
-                file_name="door_predictions.csv",
+                file_name="door_predictions_batch.csv",
                 mime="text/csv",
                 width="stretch",
+                key="dl_batch_door",
             )
 
     elif subsystem == "SHM":
@@ -417,13 +888,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
                 """,
             )
             table = table.rename(columns={k: T(k) for k in table.columns})
-            st.dataframe(table, width="stretch", hide_index=True)
+            st.dataframe(table, width="stretch", hide_index=True, key="df_batch_shm")
             st.download_button(
                 label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8-sig"),
-                file_name="shm_predictions.csv",
+                file_name="shm_predictions_batch.csv",
                 mime="text/csv",
                 width="stretch",
+                key="dl_batch_shm",
             )
 
     elif subsystem == "Rail Corrugation":
@@ -469,13 +941,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
             table = table.copy()
             table["prediction"] = table["prediction"].map(T)
             table = table.rename(columns={k: T(k) for k in table.columns})
-            st.dataframe(table, width="stretch", hide_index=True)
+            st.dataframe(table, width="stretch", hide_index=True, key="df_batch_rail")
             st.download_button(
                 label=T("Download batch predictions"),
                 data=table.to_csv(index=False).encode("utf-8-sig"),
-                file_name="rail_predictions.csv",
+                file_name="rail_predictions_batch.csv",
                 mime="text/csv",
                 width="stretch",
+                key="dl_batch_rail",
             )
 
     elif subsystem == "ACV":
@@ -528,13 +1001,14 @@ def render_batch_section(subsystem, files, model_choice, theme, submitted):
                 r"^Car ", T("Car "), regex=True
             )
             table = table.rename(columns={k: T(k) for k in table.columns})
-            st.dataframe(table, width="stretch", hide_index=True)
+            st.dataframe(table, width="stretch", hide_index=True, key="df_batch_acv")
             st.download_button(
                 label=T("Download batch rankings"),
                 data=table.to_csv(index=False).encode("utf-8-sig"),
-                file_name="acv_predictions.csv",
+                file_name="acv_predictions_batch.csv",
                 mime="text/csv",
                 width="stretch",
+                key="dl_batch_acv",
             )
 
     for name, msg in errors:
@@ -1364,478 +1838,18 @@ if uploaded_files:
         submitted = st.form_submit_button(T("Run prediction"), width="stretch")
 
     if submitted or st.session_state.get("ran"):
-        st.session_state["ran"] = True
-
-        st.html(
-            f"""
-            <div class="section" id="output">
-                <span class="sec-t">{T("03 · OUTPUT")}</span>
-                <span class="sec-line"></span>
-            </div>
-            """,
-        )
-
-        if subsystem == "Door":
-            door_error = None
-            try:
-                entry = load_bundle(SUBSYSTEM_BUNDLES["Door"])["models"][model_choice]
-                df = stream_df if stream_df is not None else dp.load_stream(
-                    io.BytesIO(uploaded_file.getvalue())
-                )
-                prog = st.progress(0, text=T("Segmenting the stream..."))
-                segs = dp.segment_stream(df)
-                prog.progress(30, text=f"{len(segs)}{T(' cycles found — classifying...')}")
-                preds = dp.run_inference(df, entry["model"], entry["scaler"])
-                prog.progress(75, text=T("Running Monte Carlo simulation..."))
-                mc = dd.run_monte_carlo(preds, lang=st.session_state.get("lang", "en"))
-                prog.progress(100, text=T("Done"))
-                prog.empty()
-            except Exception as exc:
-                preds = None
-                mc = None
-                door_error = str(exc)
-
-            if door_error is not None:
-                st.error(T("Could not analyse this file as a Door data stream — ") + door_error)
-            else:
-                n_abnormal = int((preds["status"] == dp.LABEL_ABNORMAL).sum())
-                n_total = len(preds)
-                n_normal = n_total - n_abnormal
-                mean_conf = float(preds["confidence"].mean())
-                rate = n_abnormal / n_total * 100 if n_total else 0.0
-                t_start = dp.parse_time(preds["start_time"].iloc[0])
-                t_end = dp.parse_time(preds["end_time"].iloc[-1])
-                dur_min = (t_end - t_start).total_seconds() / 60
-                model_score = load_bundle(SUBSYSTEM_BUNDLES["Door"])["scores"].get(model_choice, None)
-                model_tag = (
-                    f"{model_choice} · holdout IoU-F1 {model_score:.3f}"
-                    if model_score is not None
-                    else model_choice
-                )
-
-                st.html(
-                    f"""
-                    <div class="bento">
-
-                        <div class="fcard fcard-wide">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["activity"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Cycle timeline")}</div>
-                                    <div class="fcard-s">{T("each bar = one cycle · red = abnormal resistance")}</div>
-                                </div>
-                            </div>
-                    """,
-                )
-                chart_frame(dd.timeline_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 200)
-                st.html(
-                    f"""
-                            <div class="mini-stats">
-                                <span class="chip">{T("Cycles")} <b>{n_total}</b></span>
-                                <span class="chip">{T("Abnormal")} <b>{n_abnormal}</b></span>
-                                <span class="chip">{T("Normal")} <b>{n_normal}</b></span>
-                                <span class="chip up">{T("Abnormal rate")} <b>{rate:.0f}%</b></span>
-                            </div>
-                        </div>
-
-                        <div class="fcard">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["gauge"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Analysis summary")}</div>
-                                    <div class="fcard-s">{model_tag}</div>
-                                </div>
-                            </div>
-                            <div class="stat-big"><b class="count" data-val="{n_total}" data-dec="0">0</b><span>{T("cycles")}</span></div>
-                            <div class="sum-rows">
-                                <div class="sum-row"><span>{T("Abnormal")}</span><b style="color:var(--red-soft)">{n_abnormal}</b></div>
-                                <div class="sum-row"><span>{T("Normal")}</span><b>{n_normal}</b></div>
-                                <div class="sum-row"><span>{T("Mean confidence")}</span><b>{mean_conf * 100:.0f}%</b></div>
-                                <div class="sum-row"><span>{T("Stream length")}</span><b>{dur_min:.0f} min</b></div>
-                            </div>
-                            <div class="up-foot"><span class="tgl-dot"></span>{n_abnormal}{T(" cycles flagged for inspection")}</div>
-                        </div>
-
-                        <div class="fcard fcard-wide">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["bar"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Monte Carlo — fault distribution")}</div>
-                                    <div class="fcard-s">{mc['n_trials']:,}{T(" trials × ")}{mc['horizon']:,}{T(" future cycles")}</div>
-                                </div>
-                            </div>
-                    """,
-                )
-                chart_frame(dd.mc_hist_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
-                st.html(
-                    f"""
-                            <div class="mini-stats">
-                                <span class="chip">{T("Mean")} <b>{mc['mean']:,.1f}</b></span>
-                                <span class="chip">P95 <b>{mc['p95']:,.1f}</b></span>
-                                <span class="chip">P99 <b>{mc['p99']:,.1f}</b></span>
-                            </div>
-                        </div>
-
-                        <div class="fcard">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["pulse"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Cycle risk score")}</div>
-                                    <div class="fcard-s">{T("model P(abnormal) per cycle · 10 bins")}</div>
-                                </div>
-                            </div>
-                    """,
-                )
-                chart_frame(dd.risk_hist_svg(preds, theme=theme, lang=st.session_state.get("lang", "en")), 260)
-                st.html(
-                    f"""
-                            <div class="up-foot"><span class="tgl-dot"></span>{T("risk re-sampled in the simulation")}</div>
-                        </div>
-
-                        <div class="fcard fcard-wide">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["trend"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Survival curve")}</div>
-                                    <div class="fcard-s">{T("Probability of no fault vs cycles ahead")}</div>
-                                </div>
-                            </div>
-                    """,
-                )
-                chart_frame(dd.survival_svg(mc, theme=theme, lang=st.session_state.get("lang", "en")), 300)
-                st.html(
-                    f"""
-                            <div class="mini-stats">
-                                <span class="chip">{T("Median cycles to fault")} <b>{mc['median_cycles_disp']}</b></span>
-                                <span class="chip">{T("Median time")} <b>{mc['median_hours']}</b></span>
-                                <span class="chip up">{T("P(≥1 in 100)")} <b>{mc['p_ge1_100'] * 100:.0f}%</b></span>
-                            </div>
-                        </div>
-
-                        <div class="fcard">
-                            <div class="fcard-h">
-                                <div class="fcard-ic">{ICONS["clock"]}</div>
-                                <div>
-                                    <div class="fcard-t">{T("Forecast summary")}</div>
-                                    <div class="fcard-s">{T("from the Monte Carlo run")}</div>
-                                </div>
-                            </div>
-                            <div class="sum-rows" style="margin-top:0.4rem">
-                                <div class="sum-row"><span>{T("Expected faults / 1,000")}</span><b>{mc['mean']:,.1f}</b></div>
-                                <div class="sum-row"><span>{T("P50 faults")}</span><b>{mc['p50']:,.1f}</b></div>
-                                <div class="sum-row"><span>{T("P95 faults")}</span><b>{mc['p95']:,.1f}</b></div>
-                                <div class="sum-row"><span>{T("P99 faults")}</span><b>{mc['p99']:,.1f}</b></div>
-                                <div class="sum-row"><span>{T("P(≥1 in 100 cycles)")}</span><b>{mc['p_ge1_100'] * 100:.0f}%</b></div>
-                                <div class="sum-row"><span>{T("Median time to fault")}</span><b>{mc['median_hours']}</b></div>
-                            </div>
-                            <div class="up-foot"><span class="chip">{T("1,000 future cycles")}</span></div>
-                        </div>
-
-                    </div>
-                    """,
-                )
-
-                st.html(
-                    f"""
-                    <div class="section">
-                        <span class="sec-t">{T("PREDICTIONS TABLE")}</span>
-                        <span class="sec-line"></span>
-                    </div>
-                    """,
-                )
-                disp = preds.copy()
-                disp["status"] = disp["status"].map(
-                    {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
-                )
-                disp["flag"] = np.where(
-                    disp["status"] == T("Abnormal resistance"), T("● abnormal"), "—"
-                )
-                show_ab = st.toggle(T("Abnormal only"), key="door_filter")
-                view = disp[disp["status"] == T("Abnormal resistance")] if show_ab else disp
-
-                def _flag_rows(row):
-                    bg = (
-                        "background-color: rgba(255, 45, 85, 0.06);"
-                        if row["flag"] != "—"
-                        else ""
-                    )
-                    return [bg] * len(row)
-
-                st.dataframe(
-                    view.style.apply(_flag_rows, axis=1),
-                    width="stretch",
-                    hide_index=True,
-                    height=min(340, 44 + 35 * len(view)),
-                    column_config={
-                        "segment_id": st.column_config.TextColumn(T("Segment")),
-                        "start_time": st.column_config.TextColumn(T("Start")),
-                        "end_time": st.column_config.TextColumn(T("End")),
-                        "operation": st.column_config.TextColumn(T("Operation")),
-                        "status": st.column_config.TextColumn(T("Status")),
-                        "flag": st.column_config.TextColumn(T("Flag")),
-                        "n_rows": st.column_config.NumberColumn(T("Rows")),
-                        "confidence": st.column_config.ProgressColumn(
-                            T("Confidence"),
-                            min_value=0.0,
-                            max_value=1.0,
-                            format="%.0f%%",
-                        ),
-                    },
-                )
-
-                st.html(
-                    f"""
-                    <div class="section">
-                        <span class="sec-t">{T("INSPECT A CYCLE")}</span>
-                        <span class="sec-line"></span>
-                        <span class="sec-hint">{T("CURRENT &amp; POSITION VS STROKE")}</span>
-                    </div>
-                    """,
-                )
-                status_zh = (
-                    preds["status"]
-                    .map({dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")})
-                )
-                insp_options = [
-                    f"{r.segment_id} · {r.operation} · {status_zh[i]} · {T('conf')} {r.confidence * 100:.0f}%"
-                    for i, r in enumerate(preds.itertuples())
-                ]
-                insp_idx = st.selectbox(
-                    T("Cycle"),
-                    range(len(insp_options)),
-                    format_func=lambda i: insp_options[i],
-                    key="door_inspect",
-                )
-                sel = preds.iloc[insp_idx]
-                seg_mask = (df["t"] >= dp.parse_time(sel["start_time"])) & (
-                    df["t"] <= dp.parse_time(sel["end_time"])
-                )
-                chart_frame(dd.cycle_detail_svg(df[seg_mask], sel, theme=theme, lang=st.session_state.get("lang", "en")), 320)
-
-                st.download_button(
-                    label=T("Download predictions"),
-                    data=(
-                        preds[
-                            ["segment_id", "start_time", "end_time", "operation", "status", "n_rows"]
-                        ]
-                        .assign(status=lambda d: d["status"].map(
-                            {dp.LABEL_ABNORMAL: T("Abnormal resistance"), dp.LABEL_NORMAL: T("Normal")}
-                        ))
-                        .rename(columns={k: T(k) for k in (
-                            "segment_id", "start_time", "end_time", "operation", "status", "n_rows"
-                        )})
-                        .to_csv(index=False)
-                        .encode("utf-8-sig")
-                    ),
-                    file_name="door_predictions.csv",
-                    mime="text/csv",
-                    width="stretch",
-                )
-        elif subsystem == "SHM":
-            shm_error = None
-            try:
-                entry = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["models"][model_choice]
-                df_in = pd.read_csv(io.BytesIO(uploaded_file.getvalue()))
-                x = df_in.iloc[:, 0].to_numpy(dtype=float)
-                feats = pd.DataFrame([sp.extract_features(x)], columns=sp.FEATURE_NAMES)
-                Xs = entry["scaler"].transform(feats)
-                pred = float(entry["model"].predict(Xs)[0])
-                if entry.get("log_target", True):
-                    pred = float(np.expm1(pred))
-                damage = max(pred, 0.0)
-                shm_score = load_bundle(SUBSYSTEM_BUNDLES["SHM"])["scores"].get(model_choice, None)
-            except Exception as exc:
-                damage = None
-                shm_error = str(exc)
-
-            if shm_error is not None:
-                st.error(
-                    T("Could not analyse this file as an ") + TSUB("SHM") + T(" stress stream — ") + shm_error
-                )
-            else:
-                tag = (
-                    f"{model_choice} · CV 1−MAPE {shm_score:.3f}"
-                    if shm_score is not None
-                    else model_choice
-                )
-                st.html(
-                    f"""
-                    <div class="result-banner">
-                        <span>{T("Cumulative fatigue damage estimate — ")}<b>{damage:.4f}</b>
-                        {T(" · higher values mean closer to the fatigue limit.")}</span>
-                    </div>
-                    <div class="fcard">
-                        <div class="fcard-h">
-                            <div class="fcard-ic">{ICONS["gauge"]}</div>
-                            <div>
-                                <div class="fcard-t">{T("Fatigue damage")}</div>
-                                <div class="fcard-s">{tag}</div>
-                            </div>
-                        </div>
-                        <div class="stat-big"><b class="count" data-val="{damage:.4f}" data-dec="4">0.0000</b><span>{T("cumulative damage")}</span></div>
-                        <div class="sum-rows">
-                            <div class="sum-row"><span>{T("Fatigue failure threshold")}</span><b>1.0000</b></div>
-                            <div class="sum-row"><span>{T("Remaining margin")}</span><b>{max(1.0 - damage, 0.0):.4f}</b></div>
-                            <div class="sum-row"><span>{T("Samples analysed")}</span><b>{len(x):,}</b></div>
-                        </div>
-                    </div>
-                    """,
-                )
-                chart_frame(shm_signal_svg(x, theme=theme), 240)
-                st.download_button(
-                    label=T("Download prediction"),
-                    data=pd.DataFrame(
-                        {T("file_id"): [uploaded_file.name], T("prediction"): [round(damage, 6)]}
-                    ).to_csv(index=False).encode("utf-8-sig"),
-                    file_name="shm_predictions.csv",
-                    mime="text/csv",
-                    width="stretch",
-                )
-
-        elif subsystem == "Rail Corrugation":
-            rail_error = None
-            try:
-                entry = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["models"][model_choice]
-                df_r = rp.load_rail_file(io.BytesIO(uploaded_file.getvalue()))
-                feats = rp.extract_features(df_r)
-                Xs = entry["scaler"].transform(
-                    pd.DataFrame([feats], columns=rp.FEATURE_NAMES)
-                )
-                label = rp.LABELS[int(entry["model"].predict(Xs)[0])]
-                proba = entry["model"].predict_proba(Xs)[0]
-                conf = float(proba.max())
-                rail_score = load_bundle(SUBSYSTEM_BUNDLES["Rail Corrugation"])["scores"].get(
-                    model_choice, None
-                )
-            except Exception as exc:
-                label = None
-                rail_error = str(exc)
-
-            if rail_error is not None:
-                st.error(T("Could not analyse this file as a Rail Corrugation recording — ") + rail_error)
-            else:
-                tag = (
-                    f"{model_choice} · CV macro F1 {rail_score:.3f}"
-                    if rail_score is not None
-                    else model_choice
-                )
-                label_disp = T(label)
-                flag = label != "Normal"
-                st.html(
-                    f"""
-                    <div class="result-banner">
-                        <span>{T("Classification — ")}<b>{label_disp.upper()}</b>
-                        {T(" · confidence ")}{conf * 100:.0f}%</span>
-                    </div>
-                    <div class="fcard">
-                        <div class="fcard-h">
-                            <div class="fcard-ic">{ICONS["pulse"]}</div>
-                            <div>
-                                <div class="fcard-t">{T("Corrugation verdict")}</div>
-                                <div class="fcard-s">{tag}</div>
-                            </div>
-                        </div>
-                        <div class="stat-big">{label_disp}<span></span></div>
-                        <div class="sum-rows">
-                            <div class="sum-row"><span>{T("Confidence")}</span><b>{conf * 100:.0f}%</b></div>
-                            <div class="sum-row"><span>{T("Duration")}</span><b>1.0 s · 10 kHz</b></div>
-                        </div>
-                    </div>
-                    """,
-                )
-                bar_rows = [
-                    (T(lab), float(p), lab == label) for lab, p in zip(rp.LABELS, proba)
-                ]
-                chart_frame(bars_svg(bar_rows, theme=theme), 30 + 40 * 3)
-                st.download_button(
-                    label=T("Download prediction"),
-                    data=pd.DataFrame(
-                        {T("file_id"): [uploaded_file.name], T("prediction"): [T(label)]}
-                    ).to_csv(index=False).encode("utf-8-sig"),
-                    file_name="rail_predictions.csv",
-                    mime="text/csv",
-                    width="stretch",
-                )
-
-        elif subsystem == "ACV":
-            acv_error = None
-            ranked = None
-            proba = None
-            try:
-                entry = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["models"][model_choice]
-                tmp_path = os.path.join(tempfile.gettempdir(), f"acv_upload_{uploaded_file.name}")
-                with open(tmp_path, "wb") as f:
-                    f.write(uploaded_file.getvalue())
-                try:
-                    ranked, proba = acvp.run_inference(tmp_path, entry["model"], entry["scaler"])
-                finally:
-                    if os.path.exists(tmp_path):
-                        os.remove(tmp_path)
-                acv_score = load_bundle(SUBSYSTEM_BUNDLES["ACV"])["scores"].get(model_choice, None)
-            except Exception as exc:
-                acv_error = str(exc)
-
-            if acv_error is not None:
-                st.error(
-                    T("Could not analyse this file as an ") + TSUB("ACV") + T(" case — ") + acv_error
-                )
-            else:
-                tag = (
-                    f"{model_choice} · LOO rank-decay {acv_score:.3f}"
-                    if acv_score is not None
-                    else model_choice
-                )
-                order = np.argsort(-proba)
-                ranked_list = list(ranked)
-                proba_list = [float(proba[i]) for i in order]
-                car_disp = lambda c: f"{T('Car ')}{c}"
-                st.html(
-                    f"""
-                    <div class="result-banner">
-                        <span>{T("Most likely faulty car — ")}<b>CAR {ranked_list[0]}</b>
-                        {T(" · probability ")}{proba_list[0] * 100:.0f}%</span>
-                    </div>
-                    <div class="fcard">
-                        <div class="fcard-h">
-                            <div class="fcard-ic">{ICONS["bar"]}</div>
-                            <div>
-                                <div class="fcard-t">{T("Car leak-probability ranking")}</div>
-                                <div class="fcard-s">{tag}</div>
-                            </div>
-                        </div>
-                        <div class="sum-rows">
-                            <div class="sum-row"><span>{T("Top pick")}</span><b>{car_disp(ranked_list[0])}</b></div>
-                            <div class="sum-row"><span>{T("Runner-up")}</span><b>{car_disp(ranked_list[1])}</b></div>
-                            <div class="sum-row"><span>{T("Cars ranked")}</span><b>{len(ranked_list)}</b></div>
-                        </div>
-                    </div>
-                    """,
-                )
-                rows = [
-                    (car_disp(c), p, i == 0)
-                    for i, (c, p) in enumerate(zip(ranked_list, proba_list))
-                ]
-                chart_frame(bars_svg(rows, theme=theme), 30 + 40 * len(rows))
-                st.download_button(
-                    label=T("Download ranking"),
-                    data=pd.DataFrame(
-                        {T("file_id"): [uploaded_file.name], T("ranked_cars"): ["|".join(ranked_list)]}
-                    ).to_csv(index=False).encode("utf-8-sig"),
-                    file_name="acv_predictions.csv",
-                    mime="text/csv",
-                    width="stretch",
-                )
+        if len(uploaded_files) > 1:
+            render_batch_section(subsystem, uploaded_files, model_choice, theme, submitted)
         else:
             st.html(
                 f"""
-                <div class="result-banner">
-                    <span>{T("This subsystem is not wired to a model yet.")}</span>
+                <div class="section" id="output">
+                    <span class="sec-t">{T("03 · OUTPUT")}</span>
+                    <span class="sec-line"></span>
                 </div>
                 """,
             )
-
-    if len(uploaded_files) > 1:
-        render_batch_section(subsystem, uploaded_files, model_choice, theme, submitted)
+            render_output(subsystem, uploaded_file, model_choice, theme, submitted, "single")
 
 # ---------------------------------------------------------------------------
 # Footer
