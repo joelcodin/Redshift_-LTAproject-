@@ -1,7 +1,7 @@
 """
 Train the SHM fatigue-damage regression models.
 
-Evaluates RandomForest / GradientBoosting (raw vs log target) with 5-fold CV
+Evaluates RandomForest / GradientBoosting (log target) with 5-fold CV
 using the official score max(0, 1 - MAPE), then saves all models to
 shm_models.joblib.
 
@@ -43,17 +43,9 @@ def main():
             RandomForestRegressor(n_estimators=400, max_depth=10, min_samples_leaf=2, random_state=42, n_jobs=-1),
             True,
         ),
-        "Random Forest (raw)": (
-            RandomForestRegressor(n_estimators=400, max_depth=10, min_samples_leaf=2, random_state=42, n_jobs=-1),
-            False,
-        ),
         "Gradient Boosting": (
             GradientBoostingRegressor(n_estimators=400, learning_rate=0.03, max_depth=3, random_state=42),
             True,
-        ),
-        "Gradient Boosting (raw)": (
-            GradientBoostingRegressor(n_estimators=400, learning_rate=0.03, max_depth=3, random_state=42),
-            False,
         ),
     }
 
