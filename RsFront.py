@@ -1090,7 +1090,7 @@ with top_l:
                 <div class="tb-div"></div>
                 <div class="tb-sub">{T("TRAIN CONDITION MONITORING")}</div>
             </div>
-            <div class="tb-ver">CONSOLE · 2.2</div>
+            <div class="tb-ver">CONSOLE</div>
         </div>
         """,
     )
