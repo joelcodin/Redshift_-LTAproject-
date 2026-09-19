@@ -1,8 +1,7 @@
 __pycache__/
 *.pyc
 door_predictions.csv
-
 Rail_Corrugation/
 ACV/
 SHM/
-opencode.json
+
